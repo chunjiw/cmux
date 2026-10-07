@@ -1042,6 +1042,9 @@ public final class CmuxWebView: CmuxUndoableWebView {
         if event.modifierFlags.contains(.control) {
             contextMenuCapturedLink = nil
         }
+        // A person's click that opens a context menu always gets it, even if
+        // an automated click earlier left a suppression pending.
+        automationContextMenuSuppression.noteUserMouseDown(event)
         performBrowserClickFocusHandoff {
             super.mouseDown(with: event)
         }
@@ -1055,8 +1058,8 @@ public final class CmuxWebView: CmuxUndoableWebView {
         if !browserNativeInputDeliveryOwner.isDispatchActive { onPhysicalUserInteraction?() }
         contextMenuCapturedLink = nil
         // A physical right click always gets its menu, even if an automated
-        // right click earlier left a suppression pending (page prevented it).
-        automationContextMenuSuppressionCount = 0
+        // click earlier left a suppression pending (page prevented it).
+        automationContextMenuSuppression.noteUserMouseDown(event)
         super.rightMouseDown(with: event)
     }
 
