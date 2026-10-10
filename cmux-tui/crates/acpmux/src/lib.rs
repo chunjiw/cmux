@@ -32,6 +32,8 @@ pub mod deliver;
 pub mod harness_admin;
 pub mod harness_health;
 pub mod hub;
+#[cfg(windows)]
+mod job;
 pub mod live_models;
 pub mod local_stream;
 pub mod login_env;
