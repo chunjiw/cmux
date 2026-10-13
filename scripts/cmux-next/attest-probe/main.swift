@@ -3,6 +3,8 @@
 //
 //   attestprobe attest <out-dir>          isSupported, generateKey, attestKey, DCDevice token
 //   attestprobe assert <key-id> <out-dir> generateAssertion with an earlier key (reinstall check)
+//   attestprobe reattest <out-dir>        generateKey, then attestKey twice on the same key (one process)
+//   attestprobe attestkey <key-id> <out-dir> attestKey again on an earlier key (a later launch)
 //
 // Every result is one JSON object on stdout. The attestation object, the
 // assertion and the DeviceCheck token go to files in <out-dir> (mode 0600),
@@ -53,7 +55,7 @@ let semaphore = DispatchSemaphore(value: 0)
 Task.detached {
     defer { semaphore.signal() }
     let mode = args[1]
-    let outDir = URL(fileURLWithPath: mode == "assert" && args.count >= 4 ? args[3] : args[2])
+    let outDir = URL(fileURLWithPath: (mode == "assert" || mode == "attestkey") && args.count >= 4 ? args[3] : args[2])
     try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
     result["mode"] = mode
     do {
@@ -90,6 +92,44 @@ Task.detached {
             let assertion = try await DCAppAttestService.shared.generateAssertion(keyID, clientDataHash: clientDataHash)
             result["assertion_bytes"] = assertion.count
             try save(assertion, outDir, "reinstall-assertion.cbor")
+        } catch {
+            result["assertion_error"] = describe(error)
+        }
+    } else if mode == "reattest" {
+        do {
+            let keyID = try await DCAppAttestService.shared.generateKey()
+            result["key_id"] = keyID
+            for round in 1...2 {
+                do {
+                    let attestation = try await DCAppAttestService.shared.attestKey(keyID, clientDataHash: clientDataHash)
+                    result["attest\(round)_bytes"] = attestation.count
+                    try save(attestation, outDir, "reattest-\(round).cbor")
+                } catch {
+                    result["attest\(round)_error"] = describe(error)
+                }
+            }
+            do {
+                let assertion = try await DCAppAttestService.shared.generateAssertion(keyID, clientDataHash: clientDataHash)
+                result["assertion_bytes"] = assertion.count
+            } catch {
+                result["assertion_error"] = describe(error)
+            }
+        } catch {
+            result["generate_key_error"] = describe(error)
+        }
+    } else if mode == "attestkey" {
+        let keyID = args[2]
+        result["key_id"] = keyID
+        do {
+            let attestation = try await DCAppAttestService.shared.attestKey(keyID, clientDataHash: clientDataHash)
+            result["attest_bytes"] = attestation.count
+            try save(attestation, outDir, "attestkey.cbor")
+        } catch {
+            result["attest_error"] = describe(error)
+        }
+        do {
+            let assertion = try await DCAppAttestService.shared.generateAssertion(keyID, clientDataHash: clientDataHash)
+            result["assertion_bytes"] = assertion.count
         } catch {
             result["assertion_error"] = describe(error)
         }
