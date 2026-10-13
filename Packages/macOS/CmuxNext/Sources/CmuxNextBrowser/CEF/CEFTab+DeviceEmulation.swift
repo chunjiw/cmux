@@ -16,7 +16,7 @@ extension CEFTab: BrowserDeviceEmulating {
         guard let browserID, !isClosed else { return }
         let emulation = deviceEmulation
         guard emulation != nil || deviceEmulationApplied else { return }
-        let available = (container as BrowserPageViewportProviding).pageViewportFrame.size
+        let available = container.pageViewportFrame.size
         let scale = emulation.map { $0.fitScale(in: available) } ?? 1
         deviceEmulationScale = scale
         deviceEmulationApplied = emulation != nil
@@ -37,7 +37,7 @@ extension CEFTab: BrowserDeviceEmulating {
     /// The page area changed size: refit a device that no longer fits (or now fits better).
     func deviceEmulationViewDidResize() {
         guard let emulation = deviceEmulation else { return }
-        let available = (container as BrowserPageViewportProviding).pageViewportFrame.size
+        let available = container.pageViewportFrame.size
         guard abs(emulation.fitScale(in: available) - (deviceEmulationScale ?? 0)) > 0.001 else { return }
         applyDeviceEmulation()
     }

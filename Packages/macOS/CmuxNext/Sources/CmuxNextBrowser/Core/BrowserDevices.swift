@@ -242,18 +242,23 @@ public nonisolated struct BrowserDevices: Sendable {
     /// devices; an unreadable one is reported in `customError`.
     public static func load(customFile: URL?) -> BrowserDevices {
         var custom: [BrowserDevice] = []
-        var error: String?
+        var problem: String?
         if let customFile, let data = try? Data(contentsOf: customFile) {
+            let decoder = JSONDecoder()
             do {
-                let decoder = JSONDecoder()
-                let list = (try? decoder.decode(DataFile.self, from: data).devices) ?? (try decoder.decode([BrowserDevice].self, from: data))
+                let list: [BrowserDevice]
+                if let file = try? decoder.decode(DataFile.self, from: data) {
+                    list = file.devices
+                } else {
+                    list = try decoder.decode([BrowserDevice].self, from: data)
+                }
                 custom = list.filter(\.isValid).map { var device = $0; device.origin = nil; return device }
-                if custom.count != list.count { error = "\(list.count - custom.count) device(s) have sizes outside 1...9999 or no title" }
+                if custom.count != list.count { problem = "\(list.count - custom.count) device(s) have sizes outside 1...9999 or no title" }
             } catch {
-                error = String(describing: error)
+                problem = String(describing: error)
             }
         }
-        return BrowserDevices(builtIn: builtInDevices, custom: custom, customError: error)
+        return BrowserDevices(builtIn: builtInDevices, custom: custom, customError: problem)
     }
 
     public var all: [BrowserDevice] { custom + builtIn }
