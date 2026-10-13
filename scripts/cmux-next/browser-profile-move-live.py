@@ -156,6 +156,58 @@ def profile_id(name, engine):
     return state
 
 
+def daemon_socket():
+    """The tag's headless cmux-tui socket (from its own command line)."""
+    for _, command in teardown.processes():
+        if command.startswith(os.path.join(APP, "Contents/Resources/bin/cmux-tui") + " --headless"):
+            words = command.split()
+            if "--socket" in words:
+                return words[words.index("--socket") + 1]
+    return None
+
+
+def find_tab(node, tab):
+    if isinstance(node, dict):
+        if tab in (node.get("id"), node.get("tab_id"), node.get("public_id"), node.get("tab_resource_id")):
+            return node
+        node = list(node.values())
+    if isinstance(node, list):
+        for item in node:
+            found = find_tab(item, tab)
+            if found is not None:
+                return found
+    return None
+
+
+def daemon_tab(tab):
+    """The daemon's own record of TAB (`list-workspaces`), read straight from its socket."""
+    sock = daemon_socket()
+    if not sock:
+        return {"error": "no daemon socket"}
+    run = subprocess.run([CLI, "--socket", sock, "--json", "raw", "command", "--request-json",
+                          json.dumps({"id": 1, "cmd": "list-workspaces"})], capture_output=True, text=True, timeout=30,
+                         stdin=subprocess.DEVNULL)
+    try:
+        return find_tab(json.loads(run.stdout), tab) or {"error": "tab not in the daemon tree"}
+    except ValueError:
+        return {"error": f"exit {run.returncode}: {run.stdout[:200]} {run.stderr[:200]}"}
+
+
+def daemon_profile(tab):
+    return daemon_tab(tab).get("browser_profile_id")
+
+
+def diagnose(tab, when):
+    """Which side dropped a move: the daemon record, the app's log lines, the page's own store."""
+    record = daemon_tab(tab)
+    print(f"DIAG {when}: daemon record browser_profile_id={record.get('browser_profile_id')!r} "
+          f"engine={record.get('browser_engine')!r} error={record.get('error')!r}", flush=True)
+    logs = subprocess.run(["log", "show", "--last", "2m", "--info", "--debug", "--style", "compact", "--predicate",
+                           'subsystem == "com.cmuxterm.app.next"'], capture_output=True, text=True, timeout=90).stdout
+    lines = [line for line in logs.splitlines() if "profile" in line.lower() or "frontend-browser" in line.lower()]
+    print(f"DIAG {when}: app log ({len(lines)} lines):\n" + "\n".join(lines[-25:]), flush=True)
+
+
 def move(tab, name):
     return cli("browser-profile", "move-tab", "--target", f"tab:{tab}", "--browser-profile", name)
 
@@ -171,15 +223,12 @@ def run_engine(engine, url):
         return
     _, index, _ = tab_row(tab)
     first = read(tab, f"{engine}-1-A-set")
+    diagnose(tab, "before the move")
     check(first.get("cookie") == "a" and first.get("local") == "a" and first.get("idb") == "a", f"{engine}: A has a/a/a: {first}")
 
     code, _ = move(tab, b_name)
-    time.sleep(2)  # test harness: let the app log the daemon reply before the diagnostic read
-    logs = subprocess.run(["log", "show", "--last", "1m", "--style", "compact", "--predicate",
-                           'eventMessage CONTAINS[c] "frontend-browser-tab-profile" OR eventMessage CONTAINS[c] "browser profile"'],
-                          capture_output=True, text=True, timeout=60).stdout
-    print("DIAG log:\n" + "\n".join(logs.splitlines()[-15:]), flush=True)
-    cli("tab", "list")
+    quiet_wait(lambda: daemon_profile(tab) == b, 10)
+    diagnose(tab, "after move to B")
     state = quiet_wait(lambda: (lambda s: s if s.get("profile") == b else None)(cli("browser", tab, "state")[1]), 20)
     check(code == 0 and bool(state), f"{engine}: same tab id {tab} now reports profile B: {state}")
     _, moved_index, _ = tab_row(tab)
@@ -193,6 +242,7 @@ def run_engine(engine, url):
 
     move(tab, a_name)
     quiet_wait(lambda: cli("browser", tab, "state")[1].get("profile") == a, 20)
+    diagnose(tab, "after move back to A")
     back = read(tab, f"{engine}-4-back-in-A")
     check(back.get("cookie") == "a" and back.get("local") == "a" and back.get("idb") == "a" and back.get("session") == "",
           f"{engine}: back in A shows a/a/a, sessionStorage empty: {back}")
