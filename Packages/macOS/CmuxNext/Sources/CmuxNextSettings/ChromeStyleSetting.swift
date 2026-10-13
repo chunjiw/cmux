@@ -1,8 +1,10 @@
+public import CmuxNextActions
 public import CmuxNextDesign
 
 /// `appearance.chromeStyle` in cmux.json (`ChromeStyle`): one string for the
 /// window's look, whose values supply the defaults of the curved main pane,
-/// `layout.paneSeparation`, `sidebar.border` and `appearance.sidebarSurface`.
+/// `layout.paneSeparation`, `sidebar.border` and `appearance.sidebarSurface`
+/// (the table: schemas/settings/chrome-styles.json).
 /// A key set in the file still wins over its style. A missing key is
 /// `default`; a bad value is `default` plus a diagnostic.
 public nonisolated struct ChromeStyleSetting: Sendable {
@@ -43,24 +45,32 @@ public nonisolated struct ChromeStyleSetting: Sendable {
                        "seam", "sidebar", "two-tone", "minimal", "bare"]
         )
     }
-
-    static func title(_ style: ChromeStyle) -> SettingText {
-        switch style {
-        case .default: SettingsText.keyed("settings.choice.chromeStyle.default", "Default")
-        case .card: SettingsText.keyed("settings.choice.chromeStyle.card", "Card")
-        case .cardOutlined: SettingsText.keyed("settings.choice.chromeStyle.cardOutlined", "Card with Outlines")
-        case .flat: SettingsText.keyed("settings.choice.chromeStyle.flat", "Flat")
-        case .flatSidebarLine: SettingsText.keyed("settings.choice.chromeStyle.flatSidebarLine", "Flat with Sidebar Line")
-        case .bare: SettingsText.keyed("settings.choice.chromeStyle.bare", "Bare")
-        case .panes: SettingsText.keyed("settings.choice.chromeStyle.panes", "Panes")
-        case .twoTone: SettingsText.keyed("settings.choice.chromeStyle.twoTone", "Two-Tone")
-        }
-    }
 }
 
 extension SettingsApplier {
     /// Copies `appearance.chromeStyle` into `design`, writing only a change.
     static func applyChromeStyle(_ snapshot: CmuxConfigSnapshot, to design: DesignSettings) {
         if design.chromeStyle != snapshot.chromeStyle { design.chromeStyle = snapshot.chromeStyle }
+    }
+}
+
+extension ChromeStyleSetting {
+    /// Binds every `appearance.chromeStyle.<name>` palette action. `save`
+    /// returns a refusal (the key is managed) before anything changes, else
+    /// starts the cmux.json write and returns nil; the style then applies at
+    /// once and the file watcher reapplies the same value.
+    @MainActor public static func bindActions(
+        into registry: ActionRegistry, design: DesignSettings,
+        save: @escaping @MainActor (_ path: [String], _ value: JSONValue?) -> String?
+    ) {
+        for style in ChromeStyle.allCases {
+            registry.bind(ActionID(rawValue: actionID(style)), invoke: { [weak registry] _ in
+                if let refusal = save(configPath, fileValue(style)) {
+                    registry?.refuse(refusal)
+                    return
+                }
+                design.chromeStyle = style
+            })
+        }
     }
 }

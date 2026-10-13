@@ -73,6 +73,6 @@ extension Metrics {
         // A pane outline or the sidebar's edge line parts them; both are already 0 under borders none.
         let lineSeparates = paneBorder != .none || sidebarBorderWidth > 0
         return DesignSettings.shared.sidebarSurface.chromeShade(separateShade: separate, lineSeparates: lineSeparates,
-                                                                borderlessStep: style.borderlessStep)
+                                                                borderlessStep: style.borderlessStep ?? SidebarSurface.borderlessStep)
     }
 }
