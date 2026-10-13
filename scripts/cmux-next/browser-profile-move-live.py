@@ -5,17 +5,22 @@ plans/cmux-next/data-model.md 5).
   scripts/cmux-next/browser-profile-move-live.py --tag <tag> [--out DIR] [--app PATH] [--engines webkit,cef]
 
 Launches the tagged app (no activation, automation socket, empty config) and drives it only
-through the bundled `cmux` CLI, as an agent does. A local page sets and prints a cookie,
-localStorage, sessionStorage and an IndexedDB value. For each engine:
+through the bundled `cmux` CLI, as an agent does: the daemon verbs (browser-profile-agent-v1) on
+the app's own daemon socket, and the app's Move Tab to Browser Profile action on the app socket.
+A local page sets and prints a cookie, localStorage, sessionStorage and an IndexedDB value. For
+each engine:
 
-  1. `browser-profile create` makes profiles A and B (new and empty);
-  2. `tab new-browser --profile A --engine E` opens the page in A and sets the values "a";
-  3. `browser-profile move-tab --target tab:TAB --browser-profile B` (the daemon moves the record,
-     the app re-makes the page): same tab id and position, the page reloads, every value is empty;
+  1. `browser profile create` makes profiles A and B (new and empty);
+  2. `browser tab open --profile A --engine E` opens the page in A and sets the values "a";
+  3. `browser tab TAB set-profile --profile B` (daemon verb; the app follows the record and
+     re-makes the page): same tab id and position, the page reloads, every value is empty;
   4. the page sets "b" in B;
-  5. move back to A: A's cookie, localStorage and IndexedDB show "a" again (sessionStorage
-     belongs to the page and starts empty);
-  6. `tab new-browser --profile B` opens a tab straight in B: it shows "b".
+  5. the app action `browser-profile move-tab` moves it back to A: A's cookie, localStorage and
+     IndexedDB show "a" again (sessionStorage and back/forward stay with the old page);
+  6. `browser tab open --profile B` opens a tab straight in B: it shows "b".
+
+After each step the daemon's record (`tab show`: extra.browser_profile_id) and the app's view
+(`browser TAB state`: profile) must both name the profile.
 
 Every read is printed and every step leaves a page screenshot in --out. GUI host only (nx-remote
 --needs gui --app-from-fleet). The app is quit and the tag's daemons stopped at the end. Exits 1
@@ -134,26 +139,60 @@ def tab_row(tab):
 
 
 def read(tab, step):
-    """Waits for the page to finish its reads; returns {cookie, local, session, idb} and saves a screenshot."""
-    code, _ = cli("browser", tab, "wait", "--function", "document.title === 'ready'", "--timeout-ms", "30000")
-    _, value = cli("browser", tab, "text", "#out")
-    text = value.get("value") if isinstance(value.get("value"), str) else ""
+    """The page's own reads {cookie, local, session, idb} once it has finished them, and a screenshot.
+
+    A page made a moment ago may not exist yet in the engine (CEF makes its browser
+    asynchronously): `wait` then fails at once. That is retried, bounded, never a fixed delay."""
     keys = {"cookie": "cookie", "localStorage": "local", "sessionStorage": "session", "IndexedDB": "idb"}
-    values = {keys[k]: v.strip() for k, _, v in (line.partition(":") for line in text.splitlines()) if k in keys} if text else None
+
+    def attempt():
+        code, _ = cli("browser", tab, "wait", "--function", "document.title === 'ready'", "--timeout-ms", "15000")
+        if code != 0:
+            return None
+        _, value = cli("browser", tab, "text", "#out")
+        text = value.get("value") if isinstance(value.get("value"), str) else ""
+        values = {keys[k]: v.strip() for k, _, v in (line.partition(":") for line in text.splitlines()) if k in keys}
+        return values if len(values) == 4 else None
+
+    values = quiet_wait(attempt, 45)
     cli("browser", tab, "screenshot", "--out", os.path.join(opts.out, f"{step}.png"))
     print(f"READ {step}: {json.dumps(values)}", flush=True)
     return values or {}
 
 
-def profile_id(name, engine):
-    """Creates profile NAME (`browser-profile create`) and learns its id from a probe tab opened in it."""
-    cli("browser-profile", "create", "--name", name)
-    _, opened = cli("browser-profile", "new-tab", "--browser-profile", name, "--url", "about:blank")
-    probe = created_tab(opened)
-    state = quiet_wait(lambda: cli("browser", probe, "state")[1].get("profile"), 20) if probe else None
-    if probe:
-        cli("browser", probe, "close")
-    return state
+def daemon(*args, timeout=90):
+    """The agent's call on the app's own daemon: `cmux --socket <its socket> --json ...`."""
+    sock = daemon_socket()
+    env = {k: v for k, v in os.environ.items() if not k.startswith("CMUX_")}
+    run = subprocess.run([CLI, "--socket", sock or "/nonexistent", "--json", *args], capture_output=True, text=True,
+                         timeout=timeout, env=env, stdin=subprocess.DEVNULL)
+    text = run.stdout.strip()
+    print(f"$ cmux --socket <daemon> {' '.join(args)}\n  -> exit {run.returncode} {text[:400]} {run.stderr.strip()[:300]}",
+          flush=True)
+    try:
+        return run.returncode, json.loads(text) if text else {}
+    except ValueError:
+        return run.returncode, {"text": text}
+
+
+def find(value, key):
+    if isinstance(value, dict):
+        if key in value:
+            return value[key]
+        value = list(value.values())
+    if isinstance(value, list):
+        for item in value:
+            found = find(item, key)
+            if found is not None:
+                return found
+    return None
+
+
+def profiles_match(tab, profile):
+    """The daemon's record and the app's view of TAB both name PROFILE (bounded wait for the app)."""
+    record = find(daemon("tab", tab, "show")[1], "browser_profile_id")
+    app_view = quiet_wait(lambda: (lambda p: p if p == profile else None)(cli("browser", tab, "state")[1].get("profile")), 20)
+    return record, app_view or cli("browser", tab, "state")[1].get("profile")
 
 
 def daemon_socket():
@@ -208,29 +247,33 @@ def diagnose(tab, when):
     print(f"DIAG {when}: app log ({len(lines)} lines):\n" + "\n".join(lines[-25:]), flush=True)
 
 
-def move(tab, name):
-    return cli("browser-profile", "move-tab", "--target", f"tab:{tab}", "--browser-profile", name)
-
-
 def run_engine(engine, url):
     a_name, b_name = f"Proof A {engine} {RUN}", f"Proof B {engine} {RUN}"
-    a, b = profile_id(a_name, engine), profile_id(b_name, engine)
+    a = find(daemon("browser", "profile", "create", "--name", a_name)[1], "id")
+    b = find(daemon("browser", "profile", "create", "--name", b_name)[1], "id")
     check(bool(a) and bool(b) and a != b and "default" not in (a, b), f"{engine}: new profiles A {a} and B {b}")
-    code, opened = cli("tab", "new-browser", "--url", url + "?set=a", "--profile", a or "", "--engine", engine)
-    tab = created_tab(opened)
+    listed = [p.get("name") for p in find(daemon("browser", "profile", "list")[1], "profiles") or []]
+    check(a_name in listed and b_name in listed, f"{engine}: profile list names A and B")
+    code, opened = daemon("browser", "tab", "open", "--url", url + "?set=a", "--profile", a_name, "--engine", engine)
+    tab = find(opened, "tab_id")
     check(code == 0 and bool(tab), f"{engine}: tab opened in A: {tab}")
     if not tab:
         return
     _, index, _ = tab_row(tab)
+    check(profiles_match(tab, a) == (a, a), f"{engine}: tab info names A: {profiles_match(tab, a)}")
     first = read(tab, f"{engine}-1-A-set")
-    diagnose(tab, "before the move")
     check(first.get("cookie") == "a" and first.get("local") == "a" and first.get("idb") == "a", f"{engine}: A has a/a/a: {first}")
 
-    code, _ = move(tab, b_name)
-    quiet_wait(lambda: daemon_profile(tab) == b, 10)
-    diagnose(tab, "after move to B")
-    state = quiet_wait(lambda: (lambda s: s if s.get("profile") == b else None)(cli("browser", tab, "state")[1]), 20)
-    check(code == 0 and bool(state), f"{engine}: same tab id {tab} now reports profile B: {state}")
+    # A move reloads the page's current URL: leave the ?set= URL first, or the reload in the
+    # new profile would write the old values there.
+    cli("browser", tab, "navigate", url)
+    read(tab, f"{engine}-1b-A-plain")
+    code, moved = daemon("browser", "tab", tab, "set-profile", "--profile", b)
+    check(code == 0 and find(moved, "changed") is True, f"{engine}: set-profile B answered changed: {moved}")
+    seen = profiles_match(tab, b)
+    if seen != (b, b):
+        diagnose(tab, "after set-profile B")
+    check(seen == (b, b), f"{engine}: same tab id {tab}: daemon record and app both name B: {seen}")
     _, moved_index, _ = tab_row(tab)
     check(moved_index == index, f"{engine}: tab kept its position {index} -> {moved_index}")
     empty = read(tab, f"{engine}-2-B-empty")
@@ -240,19 +283,24 @@ def run_engine(engine, url):
     second = read(tab, f"{engine}-3-B-set")
     check(second.get("cookie") == "b" and second.get("local") == "b" and second.get("idb") == "b", f"{engine}: B has b/b/b: {second}")
 
-    move(tab, a_name)
-    quiet_wait(lambda: cli("browser", tab, "state")[1].get("profile") == a, 20)
-    diagnose(tab, "after move back to A")
+    # Back to A through the app's own action (the menu and toolbar path), from the plain URL.
+    cli("browser", tab, "navigate", url)
+    read(tab, f"{engine}-3b-B-plain")
+    code, _ = cli("browser-profile", "move-tab", "--target", f"tab:{tab}", "--browser-profile", a_name)
+    seen = profiles_match(tab, a)
+    if seen != (a, a):
+        diagnose(tab, "after the app action moved it to A")
+    check(code == 0 and seen == (a, a), f"{engine}: app action moved it back: daemon record and app both name A: {seen}")
     back = read(tab, f"{engine}-4-back-in-A")
     check(back.get("cookie") == "a" and back.get("local") == "a" and back.get("idb") == "a" and back.get("session") == "",
           f"{engine}: back in A shows a/a/a, sessionStorage empty: {back}")
 
-    code, opened = cli("tab", "new-browser", "--url", url, "--profile", b or "", "--engine", engine)
-    other = created_tab(opened)
+    code, opened = daemon("browser", "tab", "open", "--url", url, "--profile", b, "--engine", engine)
+    other = find(opened, "tab_id")
     check(code == 0 and bool(other), f"{engine}: new tab opened straight in B: {other}")
     if other:
-        state = cli("browser", other, "state")[1]
-        check(state.get("profile") == b, f"{engine}: the new tab reports profile B: {state.get('profile')}")
+        seen = profiles_match(other, b)
+        check(seen == (b, b), f"{engine}: the new tab's info names B: {seen}")
         fresh = read(other, f"{engine}-5-new-tab-in-B")
         check(fresh.get("cookie") == "b" and fresh.get("local") == "b" and fresh.get("idb") == "b", f"{engine}: new tab in B shows b/b/b: {fresh}")
     shot = rpc("debug.window_snapshot", {"kind": "main", "path": os.path.join(opts.out, f"{engine}-window.png")}, timeout=60)

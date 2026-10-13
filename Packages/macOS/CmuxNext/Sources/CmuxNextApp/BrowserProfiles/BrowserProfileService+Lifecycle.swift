@@ -42,7 +42,7 @@ extension BrowserProfileService {
         var found: [(TabModel, PaneModel)] = []
         for (workspace, _) in services.machines.allWorkspaces {
             for pane in workspace.screens.flatMap(\.panes) {
-                for tab in pane.tabs where tab.isFrontendOwned && tab.snapshot.browserProfileID == id { found.append((tab, pane)) }
+                for tab in pane.tabs where tab.isFrontendOwned && tab.browserProfileID == id { found.append((tab, pane)) }
             }
         }
         return found

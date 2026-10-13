@@ -122,11 +122,11 @@ final class BrowserProfileService {
         if case let windows = services.windows, let incognito = windows.browserProfile(forWorkspace: services.workspaceID(ofTab: key)) {
             return incognito
         }
-        return book.engineProfile(for: services.cache.tabModel(key)?.snapshot.browserProfileID)
+        return book.engineProfile(for: services.cache.tabModel(key)?.browserProfileID)
     }
 
     /// The wire id of a tab's profile (nil record = `default`).
     func profileID(ofTab tab: TabModel) -> String {
-        tab.snapshot.browserProfileID ?? BrowserProfileRecord.defaultID
+        tab.browserProfileID ?? BrowserProfileRecord.defaultID
     }
 }
