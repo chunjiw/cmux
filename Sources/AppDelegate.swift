@@ -1319,11 +1319,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     var sessionSnapshotOverwriteGuard: SessionSnapshotOverwriteGuard?
     /// Session snapshot persistence (CmuxSession); composition-root owned.
     /// `nonisolated` because the autosave write block runs on `sessionPersistenceQueue`.
-    nonisolated let sessionSnapshotStore: any SessionSnapshotStoring<AppSessionSnapshot> = SessionSnapshotRepository(
-        schemaVersion: SessionSnapshotSchema.currentVersion,
-        bundleIdentifier: Bundle.main.bundleIdentifier,
-        decoderUserInfo: [.cmuxTrustedPersistedSessionSnapshot: true]
-    )
+    nonisolated let sessionSnapshotStore: any SessionSnapshotStoring<AppSessionSnapshot>
     private lazy var sessionSnapshotPersistenceWriter = SessionSnapshotPersistenceWriter(
         store: sessionSnapshotStore,
         queue: sessionPersistenceQueue
@@ -1490,7 +1486,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 #endif
 
-    override init() {
+    override convenience init() {
+        self.init(sessionSnapshotStore: SessionSnapshotRepository(
+            schemaVersion: SessionSnapshotSchema.currentVersion,
+            bundleIdentifier: Bundle.main.bundleIdentifier,
+            decoderUserInfo: [.cmuxTrustedPersistedSessionSnapshot: true]
+        ))
+    }
+
+    init(sessionSnapshotStore: any SessionSnapshotStoring<AppSessionSnapshot>) {
+        self.sessionSnapshotStore = sessionSnapshotStore
         cloudBannerDismissalStore = CloudBannerDismissalStore(defaults: .standard)
         let fileManager = FileManager.default
         if let bundleIdentifier = Bundle.main.bundleIdentifier,
@@ -3799,7 +3804,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 #endif
     }
 
-    private func prepareStartupSessionSnapshotIfNeeded() {
+    func prepareStartupSessionSnapshotIfNeeded() {
         guard !didPrepareStartupSessionSnapshot else { return }
         didPrepareStartupSessionSnapshot = true
         Self.removeLegacyPersistedWindowGeometry()
