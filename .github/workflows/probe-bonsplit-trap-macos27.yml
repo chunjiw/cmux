@@ -1,0 +1,155 @@
+name: Probe bonsplit pane-host trap on macOS 27
+# TEMPORARY probe (no PR): runs one app-host test at two bonsplit pins.
+
+on:
+  push:
+    branches: [probe/bonsplit-trap-macos27]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-bonsplit-trap-macos27
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: ${{ matrix.name }}
+    runs-on: blacksmith-6vcpu-macos-27
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: red
+            sha: 109515f119a29cf2c638b0a8a91c6ace13b26fb0
+          - name: green
+            sha: aa5849b3dca83b293a628c1f2c08bc34a9c5814a
+    env:
+      CI_CACHE_R2_PUBLIC_URL: ${{ vars.CI_CACHE_R2_PUBLIC_URL || 'https://ci-cache.cmux.com' }}
+      SELECTOR: cmuxTests/BonsplitPaneHostDeferredRefreshTests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+
+      - name: Init submodules
+        run: |
+          set -euo pipefail
+          git log -1 --oneline
+          bash scripts/ci/init-submodule.sh vendor/bonsplit
+          bash scripts/ci/init-submodule.sh ghostty
+          echo "vendor/bonsplit gitlink: $(git ls-tree HEAD vendor/bonsplit)"
+          echo "vendor/bonsplit HEAD: $(git -C vendor/bonsplit rev-parse HEAD)"
+
+      - name: Select Xcode 27 RC
+        run: |
+          set -euo pipefail
+          sw_vers
+          ls -la /Volumes || true
+          ls -d /Applications/Xcode* || true
+          app="$(find /Volumes/XC27RELEASECANDIDATE -maxdepth 2 -name 'Xcode*.app' -type d 2>/dev/null | head -n 1)"
+          if [ -z "$app" ]; then
+            echo "::error::No Xcode .app under /Volumes/XC27RELEASECANDIDATE"
+            exit 1
+          fi
+          echo "Xcode app: $app"
+          sudo -n xcode-select -s "$app/Contents/Developer" || true
+          echo "DEVELOPER_DIR=$app/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$app/Contents/Developer" xcodebuild -version
+          sudo -n env DEVELOPER_DIR="$app/Contents/Developer" xcodebuild -runFirstLaunch || true
+
+      - name: Download pre-built GhosttyKit.xcframework
+        run: ./scripts/download-prebuilt-ghosttykit.sh
+
+      - name: Install zig
+        run: ./scripts/install-zig-ci.sh
+
+      - name: Install Rust
+        run: ./scripts/install-rust-ci.sh
+
+      - name: Create virtual display
+        run: |
+          set -euo pipefail
+          clang -framework Foundation -framework CoreGraphics \
+            -o /tmp/create-virtual-display scripts/create-virtual-display.m
+          /tmp/create-virtual-display &
+          sleep 3
+          system_profiler SPDisplaysDataType 2>/dev/null || true
+
+      - name: Restore Swift packages
+        continue-on-error: true
+        uses: ./.github/actions/cache-restore
+        with:
+          backend: r2
+          path: .ci-source-packages
+          key: spm-${{ hashFiles('cmux.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'scripts/ci/swiftpm-cache-layout') }}
+          restore-keys: spm-
+
+      - name: Resolve Swift packages
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-source-packages
+          python3 scripts/ci/sanitize-xcode-source-packages-cache.py .ci-source-packages
+          for attempt in 1 2 3; do
+            if xcodebuild -project cmux.xcodeproj -scheme cmux-unit -configuration Debug \
+              -clonedSourcePackagesDirPath "$PWD/.ci-source-packages" -resolvePackageDependencies; then
+              exit 0
+            fi
+            rm -rf .ci-source-packages; mkdir -p .ci-source-packages; sleep $((attempt * 5))
+          done
+          exit 1
+
+      - name: Build for testing
+        run: |
+          set -euo pipefail
+          sw_vers
+          xcodebuild -version
+          set +e
+          xcodebuild -project cmux.xcodeproj -scheme cmux-unit -configuration Debug \
+            -clonedSourcePackagesDirPath "$PWD/.ci-source-packages" -disableAutomaticPackageResolution \
+            -derivedDataPath "$RUNNER_TEMP/dd" -destination "platform=macOS" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            build-for-testing > "$RUNNER_TEMP/build.log" 2>&1
+          status=$?
+          set -e
+          grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/build.log" | head -n 200 || true
+          tail -n 40 "$RUNNER_TEMP/build.log"
+          exit $status
+
+      - name: Run only the probe test
+        run: |
+          set -euo pipefail
+          sw_vers
+          xcodebuild -version
+          sudo -n automationmodetool enable-automationmode-without-authentication || true
+          set +e
+          xcodebuild -project cmux.xcodeproj -scheme cmux-unit -configuration Debug \
+            -clonedSourcePackagesDirPath "$PWD/.ci-source-packages" -disableAutomaticPackageResolution \
+            -derivedDataPath "$RUNNER_TEMP/dd" -destination "platform=macOS" \
+            -parallel-testing-enabled NO \
+            "-only-testing:$SELECTOR" \
+            -resultBundlePath "$RUNNER_TEMP/probe.xcresult" \
+            test-without-building > "$RUNNER_TEMP/test.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/test.log"
+          echo "=== probe summary (${{ matrix.name }}) ==="
+          grep -n -E "BonsplitPaneHostDeferredRefreshTests|Fatal error|No Observable object|crash|Test run with|Executed|TEST .* (SUCCEEDED|FAILED)|Restarting after unexpected exit" "$RUNNER_TEMP/test.log" | head -n 80 || true
+          echo "xcodebuild exit status: $status"
+          exit $status
+
+      - name: Crash reports
+        if: always()
+        run: |
+          for d in ~/Library/Logs/DiagnosticReports /Library/Logs/DiagnosticReports; do
+            ls -la "$d" 2>/dev/null | grep -i -E "cmux|xctest" || true
+            for f in $(ls "$d" 2>/dev/null | grep -i -E "cmux" | head -n 3); do
+              echo "=== $d/$f ==="; head -c 6000 "$d/$f"; echo
+            done
+          done
+          if [ -d "$RUNNER_TEMP/probe.xcresult" ]; then
+            xcrun xcresulttool get test-results tests --path "$RUNNER_TEMP/probe.xcresult" 2>/dev/null | head -c 8000 || true
+          fi
