@@ -407,7 +407,21 @@ def restore_acpmux_config():
 REPORTS = {}  # page name -> latest {path, scrollY, at}
 SINCE = 0.0  # when the last quit started: reports older than this are stale
 SERVED = set()
+REPORT_LOG = []  # (page name, time) of every report: when each page first reported after a relaunch
+PAGE_LOADS = []  # (page name, time) of every page the server sent: a reopened page loads once
 LOCK = threading.Lock()
+
+
+def outside_image():
+    """A 1x1 PNG next to the local history pages' folder, not in it."""
+    path = os.path.join(opts.out, "outside", "dot.png")
+    if not os.path.exists(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+                                  "1f15c4890000000d49444154789c6360f8cfc0000003010100c9fe92ef"
+                                  "0000000049454e44ae426082"))
+    return path
 
 
 def page_html(name, base=""):
@@ -422,13 +436,18 @@ def page_html(name, base=""):
     nxt = {"hist-a": "hist-b", "hist-b": "hist-c"}.get(name)
     href = f"{nxt}.html" if opts.hist_file else f"/{nxt}"
     link = f"<a id='next' href='{href}'>next</a>" if nxt else ""
+    # A local history page also tries to show an image from outside its folder: a page loaded
+    # with access to its own folder cannot (`ext` 0), after a reopen too.
+    if opts.hist_file and name.startswith("hist"):
+        link += f"<img id='probe' src='file://{outside_image()}' style='width:1px;height:1px'>"
     # Both history pages report as one tab ("hist").
     tab = "hist" if name.startswith("hist") else name
     return f"""<!doctype html><html><head><title>rj {name}</title></head><body>
 <h1>rj {name}</h1>{link}{body}
 <script>
 function report(){{var p=location.pathname.replace(/^.*\\//,'/').replace(/\\.html$/,'');
-new Image().src='{base}/report?page={tab}&path='+encodeURIComponent(p)+'&y='+Math.round(window.scrollY)+'&h='+history.length+'&t='+Date.now();}}
+var probe=document.getElementById('probe'),ext=probe?(probe.complete&&probe.naturalWidth>0?1:0):-1;
+new Image().src='{base}/report?page={tab}&path='+encodeURIComponent(p)+'&y='+Math.round(window.scrollY)+'&h='+history.length+'&ext='+ext+'&t='+Date.now();}}
 {act}
 setInterval(report,1000); window.addEventListener('scroll',report); window.addEventListener('pageshow',report); report();
 </script></body></html>"""
@@ -443,11 +462,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if url.path == "/report":
             q = parse_qs(url.query)
             with LOCK:
+                REPORT_LOG.append((q.get("page", [""])[0], time.time()))
                 REPORTS[q.get("page", [""])[0]] = {"path": q.get("path", [""])[0], "scrollY": int(q.get("y", ["0"])[0]),
-                                                   "history": int(q.get("h", ["0"])[0]), "at": time.time()}
+                                                   "history": int(q.get("h", ["0"])[0]), "ext": int(q.get("ext", ["-1"])[0]),
+                                                   "at": time.time()}
             self.send_response(204)
             self.end_headers()
             return
+        with LOCK:
+            PAGE_LOADS.append((url.path.strip("/") or "index", time.time()))
         data = page_html(url.path.strip("/") or "index").encode()
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
@@ -1062,6 +1085,32 @@ def back_walk(label):
                                 "Forward could not return; the next variant's history length counts from here", "browser"))
 
 
+def load_rows(variant, launched):
+    """How long each page took to report after the relaunch (restore time per tab, compared
+    before and after a change), and that the reopened history page loaded once."""
+    with LOCK:
+        first = {}
+        for page, at in REPORT_LOG:
+            if at > launched and page not in first:
+                first[page] = at - launched
+        hist_loads = sum(1 for page, at in PAGE_LOADS if page == "hist-c" and at > launched)
+    timings = ", ".join(f"{page} {first[page]:.2f} s" for page in sorted(first))
+    say(f"  pages reported after the relaunch: {timings or 'none'}")
+    RESULTS.append((f"{variant}: pages report after the relaunch", bool(first), timings or "no page reported", "browser"))
+    if not opts.hist_file:
+        RESULTS.append((f"{variant}: page[hist] loads once after the reopen", hist_loads == 1,
+                        f"the server sent /hist-c {hist_loads} times", "browser"))
+    status = rpc("debug.browser.page_status", {"tab": HIST.get("tab")}) if HIST.get("tab") else {}
+    status = status if isinstance(status, dict) else {}
+    RESULTS.append((f"{variant}: page[hist] reopens through the engine's own history", status.get("history_start") == "engine",
+                    f"history_start {status.get('history_start')!r}, engine_state_saved {status.get('engine_state_saved')!r}, "
+                    f"can_go_back {status.get('can_go_back')!r}", "browser"))
+    if opts.hist_file:
+        ext = (REPORTS.get("hist") or {}).get("ext")
+        RESULTS.append((f"{variant}: page[hist] cannot show a file outside its folder", ext == 0,
+                        f"probe {ext} (1 shown, 0 refused, -1 no probe)", "browser"))
+
+
 def journey(base):
     global SINCE
     seed(base)
@@ -1080,6 +1129,7 @@ def journey(base):
         if not APP.quit(variant):
             RESULTS.append((f"{variant}: app ends ({'killed' if variant == 'crash' else 'its quit path'})", False, "still running", "app quit"))
             return
+        launched = time.time()
         if not APP.relaunch():
             RESULTS.append((f"{variant}: app relaunches", False, "no socket", "app quit"))
             return
@@ -1091,6 +1141,7 @@ def journey(base):
         if isinstance(before.get("counter.tick_in_view"), int):
             wait(lambda: view_tick() > before["counter.tick_in_view"], 10, 0.5)
         compare(variant, before, snapshot(f"{variant}-after"))
+        load_rows(variant, launched)
         back_walk(f"{variant} after the reopen")
 
 
