@@ -136,8 +136,10 @@ def tab_row(tab):
 def read(tab, step):
     """Waits for the page to finish its reads; returns {cookie, local, session, idb} and saves a screenshot."""
     code, _ = cli("browser", tab, "wait", "--function", "document.title === 'ready'", "--timeout-ms", "30000")
-    _, value = cli("browser", tab, "eval", "JSON.stringify(window.proofValues || null)")
-    values = json.loads(value.get("value") or "null") if isinstance(value.get("value"), str) else value.get("value")
+    _, value = cli("browser", tab, "text", "#out")
+    text = value.get("value") if isinstance(value.get("value"), str) else ""
+    keys = {"cookie": "cookie", "localStorage": "local", "sessionStorage": "session", "IndexedDB": "idb"}
+    values = {keys[k]: v.strip() for k, _, v in (line.partition(":") for line in text.splitlines()) if k in keys} if text else None
     cli("browser", tab, "screenshot", "--out", os.path.join(opts.out, f"{step}.png"))
     print(f"READ {step}: {json.dumps(values)}", flush=True)
     return values or {}
@@ -172,6 +174,12 @@ def run_engine(engine, url):
     check(first.get("cookie") == "a" and first.get("local") == "a" and first.get("idb") == "a", f"{engine}: A has a/a/a: {first}")
 
     code, _ = move(tab, b_name)
+    time.sleep(2)  # test harness: let the app log the daemon reply before the diagnostic read
+    logs = subprocess.run(["log", "show", "--last", "1m", "--style", "compact", "--predicate",
+                           'eventMessage CONTAINS[c] "frontend-browser-tab-profile" OR eventMessage CONTAINS[c] "browser profile"'],
+                          capture_output=True, text=True, timeout=60).stdout
+    print("DIAG log:\n" + "\n".join(logs.splitlines()[-15:]), flush=True)
+    cli("tab", "list")
     state = quiet_wait(lambda: (lambda s: s if s.get("profile") == b else None)(cli("browser", tab, "state")[1]), 20)
     check(code == 0 and bool(state), f"{engine}: same tab id {tab} now reports profile B: {state}")
     _, moved_index, _ = tab_row(tab)

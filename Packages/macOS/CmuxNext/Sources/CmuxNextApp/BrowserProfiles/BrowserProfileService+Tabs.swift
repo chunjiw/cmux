@@ -19,6 +19,7 @@ extension BrowserProfileService {
         }
         if let notice { services.cache.browserTabs.setNotice(notice, forKey: tab.id) }  // the new page shows it
         let surface = tab.surface
+        logger.info("browser profile move \(tab.id, privacy: .public) to \(profile, privacy: .public)")
         daemon.send("set-frontend-browser-tab-profile") { try await $0.setFrontendBrowserTabProfile(surface, profileID: profile) }
     }
 
@@ -29,7 +30,10 @@ extension BrowserProfileService {
         recordProfileObservation?.cancel()
         recordProfileObservation = Task { [weak self] in
             for await stale in ObservationStream({ [weak self] in self?.pagesInOtherStores() ?? [] }) {
-                for (key, profile, url) in stale { self?.services.cache.recreatePage(key, in: profile, url: url) }
+                for (key, profile, url) in stale {
+                    self?.logger.info("browser profile store change \(key, privacy: .public): re-making its page")
+                    self?.services.cache.recreatePage(key, in: profile, url: url)
+                }
             }
         }
     }
