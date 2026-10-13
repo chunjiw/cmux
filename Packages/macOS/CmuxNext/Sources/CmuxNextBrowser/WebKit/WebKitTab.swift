@@ -54,6 +54,9 @@ public final class WebKitTab: NSObject, BrowserTab {
     @ObservationIgnored private(set) var isClosed = false
     /// The re-show that applies the last render-rate change, while it runs (WebKitEngine).
     @ObservationIgnored var rateReshow: Task<Void, Never>?
+    /// The emulated device (`WebKitTab+DeviceEmulation`) and the user agent to restore after it.
+    @ObservationIgnored public internal(set) var deviceEmulation: BrowserDeviceEmulation?
+    @ObservationIgnored var userAgentBeforeEmulation: String?
 
     init(configuration: BrowserTabConfiguration, webViewConfiguration: WKWebViewConfiguration, engine: WebKitEngine,
          openedByPage: Bool = false) {

@@ -278,6 +278,15 @@ nonisolated enum BrowserActionCatalog: ActionCatalogGroup {
                 surfaces: [.contextMenu], requires: [.browserFocused], arguments: [CatalogArgument.themeChoice],
                 targets: [.pane], cliName: "browser theme"
             ),
+            // Chrome's device toolbar devices (cx-ocbf3): no argument shows the device menu.
+            ActionDescriptor(
+                id: "browserDevice",
+                title: String(localized: "action.browserDevice", defaultValue: "Emulate Device…", bundle: .module),
+                keywords: ["browser", "device", "responsive", "mobile", "viewport", "emulation", "iphone", "android", "toolbar"],
+                category: .browser, symbol: "iphone", surfaces: [.palette, .contextMenu], requires: [.browserFocused],
+                arguments: [CatalogArgument.deviceString, CatalogArgument.orientationString], targets: [.pane],
+                cliName: "browser device"
+            ),
             ActionDescriptor(
                 id: "saveFilePreview",
                 title: String(localized: "action.saveFilePreview", defaultValue: "Save File", bundle: .module),

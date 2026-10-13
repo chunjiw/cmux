@@ -117,6 +117,18 @@ nonisolated enum CatalogArgument {
         ActionArgument(name: "theme", title: String(localized: "argument.theme", defaultValue: "Theme", bundle: .module), kind: .enumeration([choice("system"), choice("light"), choice("dark")]))
     }
 
+    /// An emulated device's title (`browserDevice`), or none / rotate.
+    static var deviceString: ActionArgument {
+        ActionArgument(name: "device", title: String(localized: "argument.device", defaultValue: "Device", bundle: .module), kind: .string,
+                       isRequired: false)
+    }
+
+    /// portrait, landscape, unfolded-portrait or unfolded-landscape (`browserDevice`).
+    static var orientationString: ActionArgument {
+        ActionArgument(name: "orientation", title: String(localized: "argument.orientation", defaultValue: "Orientation", bundle: .module),
+                       kind: .string, isRequired: false)
+    }
+
     static var snapshotString: ActionArgument {
         ActionArgument(name: "snapshot", title: String(localized: "argument.snapshot", defaultValue: "Snapshot", bundle: .module), kind: .string)
     }

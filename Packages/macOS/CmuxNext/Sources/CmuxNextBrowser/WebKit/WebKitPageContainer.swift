@@ -43,4 +43,52 @@ final class WebKitPageContainer: NSView {
         super.willRemoveSubview(subview)
         onSubviewsChange?()
     }
+
+    // MARK: Device emulation (WebKitTab+DeviceEmulation)
+
+    /// The emulated device's CSS size, nil for none. The web view gets
+    /// exactly this size, centered at the top, and the container scales
+    /// its bounds when the device is bigger than the pane (Chrome's fit),
+    /// so the page's viewport stays the device's. While an attached Web
+    /// Inspector shares the container, WebKit owns the web view's frame
+    /// and the size is not applied (only the user agent and scale factor).
+    var emulatedSize: CGSize? {
+        didSet {
+            guard emulatedSize != oldValue else { return }
+            if emulatedSize == nil, let page {
+                setBoundsSize(frame.size)
+                setBoundsOrigin(.zero)
+                page.frame = bounds
+                page.autoresizingMask = [.width, .height]
+            }
+            placeEmulatedPage()
+        }
+    }
+
+    /// The fit scale last applied (1 when the device fits).
+    private(set) var emulatedScale: CGFloat = 1
+
+    override func resizeSubviews(withOldSize oldSize: NSSize) {
+        guard emulatedSize != nil, subviews.count == 1 else { return super.resizeSubviews(withOldSize: oldSize) }
+        placeEmulatedPage()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        if emulatedSize != nil { placeEmulatedPage() }
+    }
+
+    private func placeEmulatedPage() {
+        guard let size = emulatedSize, let page, subviews.count == 1, frame.width > 0, frame.height > 0 else { return }
+        let scale = min(1, frame.width / size.width, frame.height / size.height)
+        emulatedScale = scale
+        let scaled = CGSize(width: frame.width / scale, height: frame.height / scale)
+        if bounds.size != scaled { setBoundsSize(scaled) }
+        if bounds.origin != .zero { setBoundsOrigin(.zero) }
+        page.autoresizingMask = []
+        // Not flipped: the top edge is maxY.
+        let target = CGRect(x: ((scaled.width - size.width) / 2).rounded(.down), y: scaled.height - size.height,
+                            width: size.width, height: size.height)
+        if page.frame != target { page.frame = target }
+    }
 }
