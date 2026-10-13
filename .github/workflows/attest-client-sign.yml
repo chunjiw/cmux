@@ -1,0 +1,114 @@
+# Signs one cmux NEXT Debug test build with the Developer ID for the free-tier
+# attestation tests (cx-ds09i T1/T2). Not a release channel: the input and the
+# signed output are assets of a DRAFT GitHub release (visible only to people
+# with push access), never a workflow artifact (public on this repository) and
+# never notarized or published. The draft release is deleted after the tests.
+# It runs only on pushes to hq39/attest-probe that change
+# attest-client/request.json: {"tag": "<draft release tag>", "asset": "<zip>",
+# "sha256": "<hex>", "bundle_id": "com.cmuxterm.app.debug.<tag>"}.
+# The signing scripts and entitlements come from origin/feat-cmux-next, never
+# from the input build.
+name: attest-client-sign
+
+on:
+  push:
+    branches:
+      - hq39/attest-probe
+    paths:
+      - attest-client/request.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: attest-client-sign
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    runs-on: ${{ vars.MACOS_RUNNER_26 || 'blacksmith-6vcpu-macos-26' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Signing scripts from feat-cmux-next
+        run: |
+          set -euo pipefail
+          git fetch --quiet --no-tags --depth=1 https://github.com/${{ github.repository }}.git feat-cmux-next
+          mkdir -p "$RUNNER_TEMP/signer"
+          git archive FETCH_HEAD scripts/sign-cmux-bundle.sh scripts/import-apple-developer-id-intermediates.sh \
+            cmux.next-dev.entitlements cmux-helper.entitlements | tar -x -C "$RUNNER_TEMP/signer"
+          ls -R "$RUNNER_TEMP/signer"
+
+      - name: Fetch and check the input build
+        id: input
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          req=attest-client/request.json
+          tag="$(jq -r .tag "$req")"; asset="$(jq -r .asset "$req")"; sum="$(jq -r .sha256 "$req")"; bundle="$(jq -r .bundle_id "$req")"
+          [[ "$tag" =~ ^hq39-attest-[a-z0-9-]+$ ]] || { echo "bad tag" >&2; exit 1; }
+          [[ "$asset" =~ ^[A-Za-z0-9._-]+\.zip$ ]] || { echo "bad asset" >&2; exit 1; }
+          # Never a shipping bundle id: only a tagged Debug build.
+          [[ "$bundle" =~ ^com\.cmuxterm\.app\.debug\.[a-z0-9-]+$ ]] || { echo "bad bundle id" >&2; exit 1; }
+          [[ "$(gh release view "$tag" --json isDraft --jq .isDraft)" == "true" ]] || { echo "the release is not a draft" >&2; exit 1; }
+          mkdir -p "$RUNNER_TEMP/in" "$RUNNER_TEMP/app"
+          gh release download "$tag" -p "$asset" -D "$RUNNER_TEMP/in"
+          echo "$sum  $RUNNER_TEMP/in/$asset" | shasum -a 256 -c -
+          /usr/bin/ditto -x -k "$RUNNER_TEMP/in/$asset" "$RUNNER_TEMP/app"
+          app="$(find "$RUNNER_TEMP/app" -maxdepth 2 -type d -name '*.app' -print -quit)"
+          test -d "$app"
+          actual="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")"
+          [[ "$actual" == "$bundle" ]] || { echo "unexpected bundle id $actual" >&2; exit 1; }
+          echo "app=$app" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+
+      - name: Import signing cert
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_CERTIFICATE_BASE64" && test -n "$APPLE_CERTIFICATE_PASSWORD"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security delete-keychain attest-sign.keychain >/dev/null 2>&1 || true
+          security create-keychain -p "$KEYCHAIN_PASSWORD" attest-sign.keychain
+          security set-keychain-settings -lut 3600 attest-sign.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" attest-sign.keychain
+          security import "$RUNNER_TEMP/cert.p12" -k attest-sign.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$RUNNER_TEMP/cert.p12"
+          "$RUNNER_TEMP/signer/scripts/import-apple-developer-id-intermediates.sh" attest-sign.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" attest-sign.keychain >/dev/null
+          security list-keychains -d user -s attest-sign.keychain
+
+      - name: Sign, verify and upload to the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          APP: ${{ steps.input.outputs.app }}
+          TAG: ${{ steps.input.outputs.tag }}
+          ASSET: ${{ steps.input.outputs.asset }}
+          CMUX_SIGN_SKIP_NUCLEO_FFI: "1"
+          CMUX_HELPER_ENTITLEMENTS: ${{ runner.temp }}/signer/cmux-helper.entitlements
+        run: |
+          set -euo pipefail
+          identity="$(security find-identity -v -p codesigning attest-sign.keychain | awk -F'"' '/Developer ID Application/ {print $2; exit}')"
+          test -n "$identity"
+          cd "$RUNNER_TEMP/signer"
+          ./scripts/sign-cmux-bundle.sh "$APP" cmux.next-dev.entitlements "$identity"
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP"
+          /usr/bin/codesign -dv "$APP" 2>&1 | grep -E 'Identifier|TeamIdentifier|Authority=Developer'
+          out="$RUNNER_TEMP/signed-${ASSET}"
+          /usr/bin/ditto -c -k --keepParent "$APP" "$out"
+          shasum -a 256 "$out"
+          gh release upload "$TAG" "$out" --clobber
+
+      - name: Remove the keychain
+        if: always()
+        run: security delete-keychain attest-sign.keychain >/dev/null 2>&1 || true
