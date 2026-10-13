@@ -18330,6 +18330,69 @@
     },
     {
       "accepts" : [
+        [
+
+        ],
+        [
+          "ws-1",
+          "2B7F0C3A-workspace"
+        ]
+      ],
+      "agent_refusal" : null,
+      "agent_settable" : true,
+      "consumers" : [
+        "cmux-next"
+      ],
+      "default" : [
+        "media",
+        "zoom",
+        "downloads"
+      ],
+      "default_label" : null,
+      "group" : {
+        "key" : "settings.group.toolbar",
+        "text" : "Toolbar"
+      },
+      "help" : {
+        "key" : "settings.browser.toolbarButtons.help",
+        "text" : "Buttons shown next to the address bar. The rest are in the More menu, where Show in Toolbar pins them back."
+      },
+      "kept_on_reset_all" : false,
+      "key" : "browser.toolbarButtons",
+      "keywords" : [
+        "toolbar",
+        "buttons",
+        "pin",
+        "more"
+      ],
+      "kind" : "string_list",
+      "page_hidden" : true,
+      "path" : [
+        "browser",
+        "toolbarButtons"
+      ],
+      "refuses" : [
+        "ws-1",
+        [
+          1
+        ],
+        [
+          ""
+        ],
+        {
+
+        }
+      ],
+      "section" : "browser",
+      "summary" : null,
+      "title" : {
+        "key" : "settings.browser.toolbarButtons",
+        "text" : "Toolbar Buttons"
+      },
+      "validation" : "portable"
+    },
+    {
+      "accepts" : [
         "chromium",
         "webkit"
       ],
@@ -22807,7 +22870,7 @@
       "validation" : "portable"
     }
   ],
-  "schema_hash" : "c2169bbb37d76fad6c15203e9eaad3cccda0dd0b1ade5056bd0be9b45727a049",
+  "schema_hash" : "cb5d09e36d5269c5c57c2ffb649f3a25aae4e7666c77373f3fa8ba58d289aca1",
   "sections" : [
     {
       "id" : "general",
