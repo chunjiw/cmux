@@ -567,8 +567,13 @@ fn call(global: &GlobalArgs, stream: &mut UnixStream, command: AppCommand) -> Ra
     };
     let cli_name = params.get("cli") == Some(&Value::Bool(true));
     // Runs that may create or close something carry a key, so a retry is not a second run.
-    let keyed =
-        ["action.run", "browser.page.new_tab", "browser.page.select_tab", "browser.page.close", "browser.page.set_profile"];
+    let keyed = [
+        "action.run",
+        "browser.page.new_tab",
+        "browser.page.select_tab",
+        "browser.page.close",
+        "browser.page.set_profile",
+    ];
     let key = if keyed.contains(&method) {
         match insert_run_key(&mut params, global.idempotency_key.as_deref()) {
             Ok(key) => Some(key),

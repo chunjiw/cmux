@@ -1201,7 +1201,8 @@ impl WorkspaceRegistry {
         let before = read_frontend_browser(&tx, browser_id)?
             .ok_or_else(|| anyhow::anyhow!("browser {browser_id} is not frontend-rendered"))?;
         // A record without a profile is in `default`.
-        let current = before.profile_id.as_deref().unwrap_or(super::personal_store::DEFAULT_PROFILE_ID);
+        let current =
+            before.profile_id.as_deref().unwrap_or(super::personal_store::DEFAULT_PROFILE_ID);
         if current == profile_id {
             tx.commit()?;
             return Ok((before, false));

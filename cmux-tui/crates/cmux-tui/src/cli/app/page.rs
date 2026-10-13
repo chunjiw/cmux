@@ -155,7 +155,9 @@ pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, Us
         ("new-tab" | "set-profile", _) | ("select" | "switch" | "close", []) => {
             let (words, options) = words_and_options(rest, &["profile"], &["wait", "no-wait"])?;
             match (verb.as_str(), words.as_slice()) {
-                ("new-tab", [] | [_]) | ("select" | "switch" | "close", []) | ("set-profile", [_]) => {}
+                ("new-tab", [] | [_])
+                | ("select" | "switch" | "close", [])
+                | ("set-profile", [_]) => {}
                 _ => return Err(usage()),
             }
             if verb == "set-profile" {

@@ -159,7 +159,8 @@ pub(super) fn update(mux: &Mux, actor: &Actor, params: UpdateTabParams) -> anyho
         owner,
     )?;
     if let Some(profile_id) = profile_id {
-        let (moved, profile_changed) = mux.set_frontend_browser_tab_profile(surface, &profile_id)?;
+        let (moved, profile_changed) =
+            mux.set_frontend_browser_tab_profile(surface, &profile_id)?;
         record = moved;
         changed |= profile_changed;
     }
