@@ -66,7 +66,7 @@ pub(crate) fn dispatch(
         return ledger::commit(mux, key, operation, &fingerprint, &Value::Null, &request.actor);
     }
     let value = match request.envelope.operation {
-        ResourceOperation::BrowserProfileCreate => create(mux, fields)?,
+        ResourceOperation::BrowserProfileCreate => create(mux, fields, key)?,
         ResourceOperation::BrowserTabOpen => open(mux, &request, key)?,
         _ => set_profile(mux, &request)?,
     };
@@ -100,12 +100,16 @@ fn wire(profile: &PersonalBrowserProfile) -> Value {
 /// name that matches ignoring case.
 fn resolve(mux: &Mux, selector: &str) -> Result<PersonalBrowserProfile, ResourceError> {
     let profiles = profiles(mux)?;
-    let exact = profiles.iter().find(|p| p.id == selector || p.name == selector);
-    if let Some(profile) = exact {
+    // An id first, so a profile named like another one's id never takes it.
+    if let Some(profile) = profiles.iter().find(|p| p.id == selector) {
         return Ok(profile.clone());
     }
-    let folded: Vec<_> =
-        profiles.iter().filter(|p| p.name.to_lowercase() == selector.to_lowercase()).collect();
+    let exact: Vec<_> = profiles.iter().filter(|p| p.name == selector).collect();
+    let folded: Vec<_> = if exact.is_empty() {
+        profiles.iter().filter(|p| p.name.to_lowercase() == selector.to_lowercase()).collect()
+    } else {
+        exact
+    };
     // validation.invalid on the `profile` field: the catalog's not_found and
     // ambiguous errors name resource scopes, and a profile is a personal record.
     match folded.as_slice() {
@@ -129,8 +133,11 @@ fn text(fields: &Map<String, Value>, name: &str) -> Option<String> {
 }
 
 /// `browser.profile.create`: a new, empty profile (its own store).
-fn create(mux: &Mux, fields: &Map<String, Value>) -> Result<Value, ResourceError> {
+fn create(mux: &Mux, fields: &Map<String, Value>, key: &str) -> Result<Value, ResourceError> {
     let input = BrowserProfileInput {
+        // From the idempotency key: a retry after a crash, or a concurrent
+        // retry, finds the profile the first attempt made instead of a second.
+        id: Some(key_uuid(key)),
         name: text(fields, "name").unwrap_or_default(),
         color: text(fields, "color"),
         icon: text(fields, "icon"),
@@ -140,6 +147,17 @@ fn create(mux: &Mux, fields: &Map<String, Value>) -> Result<Value, ResourceError
         .personal_mutation(|registry| registry.create_browser_profile(input))
         .map_err(|error| failed("browser.profile.create", error))?;
     Ok(json!({"profile": wire(&profile)}))
+}
+
+/// A lowercase version-4-shaped UUID derived from `key`.
+fn key_uuid(key: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut bytes: Vec<u8> =
+        Sha256::digest(format!("browser.profile.create\0{key}").as_bytes())[..16].to_vec();
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+    format!("{}-{}-{}-{}-{}", &hex[..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..])
 }
 
 /// `browser.tab.open`: a frontend-rendered browser tab in `profile` (absent:

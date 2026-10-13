@@ -1207,6 +1207,18 @@ impl WorkspaceRegistry {
             tx.commit()?;
             return Ok((before, false));
         }
+        // Only a stored profile (read in this transaction, so a delete cannot
+        // slip in between): a record never names a profile that does not exist.
+        let exists = profile_id == super::personal_store::DEFAULT_PROFILE_ID
+            || tx
+                .query_row(
+                    "SELECT 1 FROM browser_profiles WHERE browser_profile_id = ?1",
+                    [profile_id],
+                    |_| Ok(()),
+                )
+                .optional()?
+                .is_some();
+        anyhow::ensure!(exists, "bad request: no browser profile {profile_id}");
         let mut record = before;
         record.profile_id = Some(profile_id.to_string());
         tx.execute(
