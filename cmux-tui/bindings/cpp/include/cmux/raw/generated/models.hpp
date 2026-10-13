@@ -14,7 +14,7 @@
 namespace cmux::raw {
 
 inline constexpr std::uint32_t kMuxProtocolVersion = 12U;
-inline constexpr std::string_view kProtocolIrSha256 = "e81b8aed2fef0fc47f11d3defab497d360a58c8873f6da133e969a98536acf67";
+inline constexpr std::string_view kProtocolIrSha256 = "135ea568a4d65c20372e94397b08d3b8ad9eae0b3bac2db760d8f6645dc6e313";
 
 struct ActivitySnapshot;
 struct ActivitySubscribeResult;
@@ -5069,6 +5069,7 @@ struct UpdateBrowserProfileRequest {
 struct UpdateFrontendBrowserTabRequest {
     Field<std::string> favicon_url{};
     Field<std::string> owner{};
+    Field<std::string> profile_id{};
     Id surface{};
     Field<std::string> title{};
     Field<std::string> url{};

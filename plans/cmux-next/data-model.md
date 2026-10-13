@@ -287,8 +287,18 @@ X, Open Link in Browser Profile X, `--browser-profile`), else the workspace's
 personal browser profile, else its space's, else `default`. No window level: a
 window's browser profile is its space's. The resolved id is stored on the tab
 at creation (`frontend_browser_tabs.profile_id`) and never changes by
-inheritance, so no live page silently changes cookie jar; Move Tab to Browser
-Profile reopens its URL in the target.
+inheritance, so no live page silently changes cookie jar. Move Tab to Browser
+Profile is the one explicit change: `update-frontend-browser-tab {profile_id}`
+(`frontend-browser-tab-profile-v1`) moves the record in place (same tab id and
+position), and the app re-creates the page in the target store (a new
+`WKWebView` with that profile's `WKWebsiteDataStore`, or a new CEF browser in
+that profile's `CefRequestContext`), which loads the same URL. Back/forward
+history and unsaved form input stay behind: page state must not cross
+profiles. A page made later (asleep, deferred) wakes in the record's profile
+without the old history. A tab of another machine's tree, or a daemon without
+the capability, gets the old move (the URL reopens in a new tab). Agents use
+`cmux browser profiles [create]`, `new-tab --profile` and `set-profile`
+(`browser.profiles.list|create`, `browser.page.new_tab|set_profile`).
 
 Display: the omnibar shows the tab's browser profile (dot or icon, name in the
 tooltip and Page Info) whenever more than one exists; a tab whose browser

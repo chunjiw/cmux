@@ -1,5 +1,5 @@
 // This file is generated. Do not edit by hand.
-// cmux-tui mux protocol 12, IR e81b8aed2fef0fc47f11d3defab497d360a58c8873f6da133e969a98536acf67.
+// cmux-tui mux protocol 12, IR 135ea568a4d65c20372e94397b08d3b8ad9eae0b3bac2db760d8f6645dc6e313.
 // The emitter owns this layout so generation is independent of the installed rustfmt.
 
 use super::metadata::*;
@@ -3387,6 +3387,8 @@ pub struct UpdateFrontendBrowserTabRequest {
     pub favicon_url: Optional<String>,
     #[serde(default, skip_serializing_if = "Optional::is_missing")]
     pub owner: Optional<String>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub profile_id: Optional<String>,
     pub surface: T::Id,
     #[serde(default, skip_serializing_if = "Optional::is_missing")]
     pub title: Optional<String>,

@@ -142,8 +142,25 @@ command prints its path; `--out -` writes the PNG to stdout.
 
 The per-tab commands have no saved state, console
 capture, dialogs, downloads, recording or proxies. The REPL has all of them (see "Pick the surface"). Network
-routing, geolocation, offline and viewport emulation, `identify` and profiles
-have no agent surface yet.
+routing, geolocation, offline and viewport emulation and `identify` have no
+agent surface yet.
+
+## Browser profiles
+
+A browser profile has its own cookies, storage, cache and permissions. Make a
+new, empty one for an agent's sign-ins, open tabs in it, or move a tab into it:
+
+```bash
+cmux --json browser profiles create "Research"          # prints the new id
+cmux browser "$TAB" new-tab https://example.com --profile Research
+cmux browser "$TAB" set-profile Research                 # same tab id; the page reloads in Research
+cmux --json browser "$TAB" tabs                          # each tab's "profile" id
+```
+
+`set-profile` keeps the tab and reloads its URL in the target profile's store;
+the back/forward list starts over and unsaved form input is lost. Use
+`--profile agent` for the clean agent profile. Do not move a tab into the
+person's own profile unless they asked for it.
 
 Some have UI actions that act on the focused browser and return no data:
 `cmux browser screenshot-page`, `browser screenshot-section`,

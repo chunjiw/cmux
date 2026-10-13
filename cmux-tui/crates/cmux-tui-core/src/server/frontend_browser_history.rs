@@ -10,6 +10,12 @@ use crate::Actor;
 /// `get-frontend-browser-history`. Never part of the tree.
 pub const FRONTEND_BROWSER_HISTORY_CAPABILITY: &str = "frontend-browser-history-v1";
 
+/// `profile_id` on `update-frontend-browser-tab`: move the tab to another
+/// browser profile (`default` or a lowercase UUID) in place, keeping its
+/// surface, tab id and position. The hosting app re-creates the page in the
+/// new profile's store (cookies, storage, cache), which reloads it.
+pub const FRONTEND_BROWSER_TAB_PROFILE_CAPABILITY: &str = "frontend-browser-tab-profile-v1";
+
 /// `new-frontend-browser-tab`: a browser tab whose page the frontend renders
 /// (WebKit or CEF); the daemon persists its location and never attaches a CDP
 /// target. With `idempotency_key` (`frontend-browser-tab-keys-v1`) a retry
@@ -118,6 +124,9 @@ pub(super) struct UpdateTabParams {
     favicon_url: Option<Option<String>>,
     #[serde(default)]
     owner: Option<String>,
+    /// `frontend-browser-tab-profile-v1`: the browser profile the tab moves to.
+    #[serde(default)]
+    profile_id: Option<String>,
 }
 
 /// `set-frontend-browser-history`: store a frontend-rendered browser's
@@ -136,8 +145,12 @@ pub(super) struct GetParams {
 }
 
 pub(super) fn update(mux: &Mux, actor: &Actor, params: UpdateTabParams) -> anyhow::Result<Value> {
-    let UpdateTabParams { surface, url, title, favicon_url, owner } = params;
-    let (record, changed) = mux.update_frontend_browser_tab_with_owner_as(
+    let UpdateTabParams { surface, url, title, favicon_url, owner, profile_id } = params;
+    if let Some(profile_id) = &profile_id {
+        // Checked before the location write, so a bad id changes nothing.
+        crate::workspace_registry::personal_store::validate_browser_profile_ref(profile_id)?;
+    }
+    let (mut record, mut changed) = mux.update_frontend_browser_tab_with_owner_as(
         actor,
         surface,
         url,
@@ -145,12 +158,18 @@ pub(super) fn update(mux: &Mux, actor: &Actor, params: UpdateTabParams) -> anyho
         favicon_url,
         owner,
     )?;
+    if let Some(profile_id) = profile_id {
+        let (moved, profile_changed) = mux.set_frontend_browser_tab_profile(surface, &profile_id)?;
+        record = moved;
+        changed |= profile_changed;
+    }
     Ok(json!({
         "surface": surface,
         "url": record.url,
         "title": record.title,
         "favicon_url": record.favicon_url,
         "owner": record.owner,
+        "profile_id": record.profile_id,
         "changed": changed,
     }))
 }

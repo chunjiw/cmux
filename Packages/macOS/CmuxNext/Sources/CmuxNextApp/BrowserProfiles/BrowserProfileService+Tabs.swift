@@ -1,13 +1,37 @@
 import CmuxNextActions
 import CmuxNextBrowser
 import CmuxNextDaemon
+import CmuxNextWakeups
 import Foundation
 
 /// Moving and duplicating a tab into another browser profile. A page's
 /// session state (cookies, logins, storage, back/forward history) belongs to
-/// its profile's store, so the URL reopens in the target and nothing else
-/// moves; the new page says so (data-model.md 5).
+/// its profile's store, so only the URL goes to the target; a move keeps the
+/// tab and reloads its page there, a duplicate opens a new tab (data-model.md 5).
 extension BrowserProfileService {
+    /// Moves `tab` to `profile` in place: the record names it (`frontend-browser-tab-profile-v1`), then the page
+    /// is re-made in its store (`recreatePage`). Another machine's tab or an older daemon: the old reopen.
+    func move(_ tab: TabModel, in pane: PaneModel, to profile: String, notice: String?) {
+        let daemon = services.machines.daemon(forTab: tab)
+        guard daemon.isLocal, daemon.supports(DaemonCapabilities.shared.frontendBrowserTabProfile) else {
+            return reopen(tab, in: pane, profile: profile, closingOriginal: true, notice: notice)
+        }
+        let (key, surface, cache, url) = (tab.id, tab.surface, services.cache, URL(string: currentURL(of: tab)) ?? StaticURL.blank.url)
+        services.registry.track(Task { @MainActor [weak self] in
+            if let failed = await daemon.failure("set-frontend-browser-tab-profile", {
+                try await $0.setFrontendBrowserTabProfile(surface, profileID: profile)
+            }) { return failed }
+            // The page's store comes from the record: wait for the mirror to show it.
+            guard await ObservedCondition(owner: "BrowserProfileService.move", deadline: .seconds(5)).wait({
+                (cache.tabModel(key)?.snapshot.browserProfileID ?? BrowserProfileRecord.defaultID) == profile
+            }), let self else { return "set-frontend-browser-tab-profile: the moved tab was not reported back" }
+            if let notice { cache.browserTabs.setNotice(notice, forKey: key) }  // the new page shows it
+            cache.recreatePage(key, in: book.engineProfile(for: profile), url: url)
+            refreshPresentation()
+            return nil
+        })
+    }
+
     /// Reopens `tab`'s current URL in `profile` on the same engine in the
     /// same pane, then (when `closingOriginal`) closes the original once the
     /// new tab exists, so a pane never empties.

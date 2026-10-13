@@ -1,8 +1,10 @@
 import AppKit
 import CmuxNextActions
 import CmuxNextBrowser
+import CmuxNextControl
 import CmuxNextDaemon
 import CmuxNextDesign
+import CmuxNextWakeups
 
 /// Browser profile actions (plans/cmux-next/data-model.md 5 and 7): create,
 /// edit and delete profiles; open tabs, windows and workspaces in one; set
@@ -19,7 +21,13 @@ enum BrowserProfileHandlers {
                 }
             })
         }
-        bind("browserProfile.new") { try create(invocation: $0, profiles) }
+        bind("browserProfile.new") { invocation in
+            context.registry.track(Task { @MainActor in
+                do { _ = try await create(name: invocation["name"]?.stringValue, color: invocation["color"]?.stringValue,
+                                          icon: invocation["icon"]?.stringValue, profiles); return nil
+                } catch let error as BrowserProfileBookError { return "\(BrowserProfileAppStrings.message(error))" } catch { return "browserProfile.new: \(error)" }
+            })
+        }
         bind("browserProfile.rename") { invocation in
             let record = try context.browserProfile(invocation)
             let id = record.id
@@ -78,16 +86,25 @@ enum BrowserProfileHandlers {
         BrowsingDataClear.bind(bind, context: context)
     }
 
-    /// A new profile: the given name, color and icon, else "Profile N" and
-    /// the first color no other profile uses.
-    private static func create(invocation: ActionInvocation, _ profiles: BrowserProfileService) throws {
-        let name = invocation["name"]?.stringValue.flatMap { $0.isEmpty ? nil : $0 }
-            ?? BrowserProfileAppStrings.defaultName(profiles.ordered.count + 1)
-        let used = Set(profiles.ordered.compactMap(\.color))
-        let color = invocation["color"]?.stringValue
-            ?? GroupColor.automatic(used: used)?.rawValue
-        let icon = invocation["icon"]?.stringValue.flatMap { $0.isEmpty ? nil : $0 }
-        try profiles.createProfileNow(name: name, color: color, icon: icon)
+    /// A new profile: the given name, color and icon, else "Profile N" and the first unused color; once this app knows it.
+    static func create(id: String = BrowserProfileRecord.newID(), name: String?, color: String?, icon: String?,
+                       _ profiles: BrowserProfileService) async throws -> BrowserProfileRecord {
+        let name = name.flatMap { $0.isEmpty ? nil : $0 } ?? BrowserProfileAppStrings.defaultName(profiles.ordered.count + 1)
+        let color = color ?? GroupColor.automatic(used: Set(profiles.ordered.compactMap(\.color)))?.rawValue
+        let id = try await profiles.createProfile(id: id, name: name, color: color, icon: icon.flatMap { $0.isEmpty ? nil : $0 })
+        guard await ObservedCondition(owner: "browserProfile.new", deadline: .seconds(5)).wait({ profiles.isKnown(id) }),
+              let record = profiles.record(id) else { throw AgentBrowserProfile.NotReported() }
+        return record
+    }
+
+    /// `browser.profiles.create` (BrowserProfileMethods) and the JSON of a profile it and `browser.profiles.list` report.
+    static func create(_ services: AppServices?, _ name: String?, _ color: String?, _ icon: String?) async throws -> JSONValue {
+        guard let profiles = services?.browserProfiles else { throw ControlError(code: "unavailable", message: "the app is quitting") }
+        return json(try await create(name: name, color: color, icon: icon, profiles))
+    }
+    static func json(_ record: BrowserProfileRecord) -> JSONValue {
+        .object(["id": .string(record.id), "name": .string(record.name), "color": .optional(record.color), "icon": .optional(record.icon),
+                 "default": .bool(record.isDefault), "agent": .bool(record.id == AgentBrowserProfile.id)])
     }
 }
 
@@ -119,13 +136,8 @@ extension AppActionContext {
             return nil
         }
         guard let text, !text.isEmpty else { return nil }
-        let profiles = services.browserProfiles
-        if let record = profiles.record(text) { return record }
-        let folded = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
-        if let record = profiles.ordered.first(where: { $0.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) == folded }) {
-            return record
-        }
-        throw ActionFailure.invalidTarget(BrowserProfileAppStrings.noProfile(text))
+        guard let record = services.browserProfiles.record(idOrName: text) else { throw ActionFailure.invalidTarget(BrowserProfileAppStrings.noProfile(text)) }
+        return record
     }
 
     /// The focused pane's selected tab when it is a browser tab.

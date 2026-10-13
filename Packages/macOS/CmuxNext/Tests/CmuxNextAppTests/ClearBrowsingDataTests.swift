@@ -22,7 +22,7 @@ struct ClearBrowsingDataTests {
         AppActions.bind(services)
         // A profile of its own: its WebKit store is no other suite's.
         let name = "Clear Browsing Data \(UUID().uuidString.prefix(8))"
-        try services.browserProfiles.createProfileNow(name: name, color: nil, icon: nil)
+        _ = try await BrowserProfileHandlers.create(name: name, color: nil, icon: nil, services.browserProfiles)
         let record = try #require(services.browserProfiles.ordered.first { $0.name == name })
         defer { try? services.browserProfiles.delete(record.id) }
         let profile = record.engineProfile

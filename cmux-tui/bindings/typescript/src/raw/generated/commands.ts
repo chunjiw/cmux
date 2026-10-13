@@ -1,5 +1,5 @@
 /* This file is generated. Do not edit by hand. */
-/* cmux-tui mux protocol 12, IR e81b8aed2fef0fc47f11d3defab497d360a58c8873f6da133e969a98536acf67. */
+/* cmux-tui mux protocol 12, IR 135ea568a4d65c20372e94397b08d3b8ad9eae0b3bac2db760d8f6645dc6e313. */
 
 
 import type * as T from "./types.js";
@@ -2379,6 +2379,7 @@ export interface UpdateFrontendBrowserTabRequest extends CmuxRequestBase {
   cmd: "update-frontend-browser-tab";
   "favicon_url"?: (string) | null;
   "owner"?: (string) | null;
+  "profile_id"?: (string) | null;
   "surface": T.Id;
   "title"?: (string) | null;
   "url"?: (string) | null;

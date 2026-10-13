@@ -52,6 +52,10 @@ cmux browser "$TAB" screenshot --out - > page.png
 cmux browser "$TAB" tabs
 cmux browser page tabs --all
 cmux browser "$TAB" new-tab https://example.com
+cmux browser "$TAB" new-tab https://example.com --profile Research
+cmux browser "$TAB" set-profile Research
+cmux browser profiles
+cmux browser profiles create Research
 cmux browser "$TAB" select
 cmux browser "$TAB" close
 cmux browser "$TAB" press Enter
@@ -99,6 +103,17 @@ and prints its id under `created`; `select` (or `switch`) shows and focuses the
 tab; `close` closes it. They run the same actions as the tab strip, wait for
 them unless `--no-wait`, and refuse a tab that is not an app browser tab. They
 act on the tab you name; the old `tab switch|close <index>` has no equivalent.
+
+Browser profiles keep separate cookies, local and session storage, IndexedDB,
+cache, service workers and site permissions. `cmux browser profiles` lists them
+(id, name, color, icon, `default`, `agent`); `profiles create [NAME] [--color C]
+[--icon I]` makes a new, empty one and prints its id. `new-tab [URL] --profile
+P` opens the tab in profile P (an id, a name, or `agent` for the clean agent
+profile). `set-profile P` moves the tab to P in place: the tab keeps its id,
+position and title, and its page reloads at the same URL in P's store, so every
+cookie and storage value switches at once. The back/forward list starts over
+in P, and form input that was not saved is lost. `tabs` and `state` report each
+tab's `profile` id. An incognito tab cannot move.
 
 `press KEY` sends a key to the focused element (or `--selector`'s element,
 focused first). Keys are W3C key or code names (`Enter`, `Tab`, `Escape`,

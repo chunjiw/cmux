@@ -1185,6 +1185,43 @@ impl WorkspaceRegistry {
         Ok((record, true))
     }
 
+    /// Move a frontend browser to browser profile `profile_id` (`default` or
+    /// a lowercase UUID; `frontend-browser-tab-profile-v1`). The tab keeps
+    /// its id and place; the app re-creates its page in the new profile's
+    /// store. Only an explicit move changes it, never inheritance.
+    pub fn set_frontend_browser_profile(
+        &mut self,
+        browser_id: &str,
+        profile_id: &str,
+    ) -> anyhow::Result<(FrontendBrowserRecord, bool)> {
+        validate_browser_public_id(browser_id)?;
+        super::personal_store::validate_browser_profile_ref(profile_id)?;
+        let db = self.connection.get();
+        let tx = db.unchecked_transaction()?;
+        let before = read_frontend_browser(&tx, browser_id)?
+            .ok_or_else(|| anyhow::anyhow!("browser {browser_id} is not frontend-rendered"))?;
+        // A record without a profile is in `default`.
+        let current = before.profile_id.as_deref().unwrap_or(super::personal_store::DEFAULT_PROFILE_ID);
+        if current == profile_id {
+            tx.commit()?;
+            return Ok((before, false));
+        }
+        let mut record = before;
+        record.profile_id = Some(profile_id.to_string());
+        tx.execute(
+            "UPDATE frontend_browser_tabs SET profile_id = ?2 WHERE browser_id = ?1",
+            params![browser_id, record.profile_id],
+        )?;
+        append_presentation_record(
+            &tx,
+            "browser.frontend.updated",
+            vec![browser_subject(browser_id)],
+            &json!({"browser_id": browser_id, "browser": record}),
+        )?;
+        tx.commit()?;
+        Ok((record, true))
+    }
+
     /// Notification ids acknowledged as read on the shared console. A
     /// restart restores an unread marker only for unacknowledged ones.
     pub(crate) fn acked_notification_ids(&self) -> anyhow::Result<HashSet<String>> {

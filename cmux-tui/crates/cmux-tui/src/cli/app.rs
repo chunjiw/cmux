@@ -144,7 +144,7 @@ pub(super) fn parse(args: &[String]) -> Result<Option<AppCommand>, UsageError> {
     }
     if scope == "browser"
         && let Some(target) = args.get(1)
-        && (target == "page" || target.starts_with("tab_"))
+        && (target == "page" || target == "profiles" || target.starts_with("tab_"))
     {
         return parse_page(target, &args[2..]).map(Some);
     }
@@ -568,7 +568,7 @@ fn call(global: &GlobalArgs, stream: &mut UnixStream, command: AppCommand) -> Ra
     let cli_name = params.get("cli") == Some(&Value::Bool(true));
     // Runs that may create or close something carry a key, so a retry is not a second run.
     let keyed =
-        ["action.run", "browser.page.new_tab", "browser.page.select_tab", "browser.page.close"];
+        ["action.run", "browser.page.new_tab", "browser.page.select_tab", "browser.page.close", "browser.page.set_profile"];
     let key = if keyed.contains(&method) {
         match insert_run_key(&mut params, global.idempotency_key.as_deref()) {
             Ok(key) => Some(key),
