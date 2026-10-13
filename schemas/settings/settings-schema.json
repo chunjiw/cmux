@@ -633,6 +633,16 @@
             }
           },
           {
+            "key" : "settings.group.toolbar",
+            "rows" : [
+              "browser.toolbarButtons"
+            ],
+            "title" : {
+              "key" : "settings.group.toolbar",
+              "text" : "Toolbar"
+            }
+          },
+          {
             "key" : "settings.group.bookmarks",
             "rows" : [
               "browser.showBookmarksBar"
@@ -18334,12 +18344,76 @@
 
         ],
         [
-          "ws-1",
-          "2B7F0C3A-workspace"
+          "devTools",
+          "theme",
+          "profile",
+          "designMode",
+          "downloads",
+          "favorites",
+          "zoom",
+          "media"
         ]
       ],
       "agent_refusal" : null,
       "agent_settable" : true,
+      "choices" : [
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.media",
+            "text" : "Media Controls"
+          },
+          "value" : "media"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.zoom",
+            "text" : "Zoom Level"
+          },
+          "value" : "zoom"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.favorites",
+            "text" : "Bookmarks"
+          },
+          "value" : "favorites"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.downloads",
+            "text" : "Downloads"
+          },
+          "value" : "downloads"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.designMode",
+            "text" : "Design Mode"
+          },
+          "value" : "designMode"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.profile",
+            "text" : "Browser Profile"
+          },
+          "value" : "profile"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.theme",
+            "text" : "Browser Theme"
+          },
+          "value" : "theme"
+        },
+        {
+          "title" : {
+            "key" : "settings.browser.toolbarButtons.devTools",
+            "text" : "Developer Tools"
+          },
+          "value" : "devTools"
+        }
+      ],
       "consumers" : [
         "cmux-next"
       ],
@@ -18363,25 +18437,26 @@
         "toolbar",
         "buttons",
         "pin",
-        "more"
+        "more",
+        "extensions",
+        "devtools",
+        "bookmarks"
       ],
       "kind" : "string_list",
-      "page_hidden" : true,
+      "ordered" : false,
+      "page_hidden" : false,
       "path" : [
         "browser",
         "toolbarButtons"
       ],
       "refuses" : [
-        "ws-1",
+        "media",
+        [
+          "__not_a_choice__"
+        ],
         [
           1
-        ],
-        [
-          ""
-        ],
-        {
-
-        }
+        ]
       ],
       "section" : "browser",
       "summary" : null,
@@ -22870,7 +22945,7 @@
       "validation" : "portable"
     }
   ],
-  "schema_hash" : "cb5d09e36d5269c5c57c2ffb649f3a25aae4e7666c77373f3fa8ba58d289aca1",
+  "schema_hash" : "197eb1c0da772730a7b2f96b1c567597afb0e66de39abde93473304d0a865539",
   "sections" : [
     {
       "id" : "general",

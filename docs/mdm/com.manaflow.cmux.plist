@@ -3545,6 +3545,17 @@
 				<dict>
 					<key>pfm_name</key>
 					<string>Item</string>
+					<key>pfm_range_list</key>
+					<array>
+						<string>media</string>
+						<string>zoom</string>
+						<string>favorites</string>
+						<string>downloads</string>
+						<string>designMode</string>
+						<string>profile</string>
+						<string>theme</string>
+						<string>devTools</string>
+					</array>
 					<key>pfm_type</key>
 					<string>string</string>
 				</dict>
