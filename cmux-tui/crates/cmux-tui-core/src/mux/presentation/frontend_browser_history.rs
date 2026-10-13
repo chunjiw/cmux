@@ -100,7 +100,8 @@ impl Mux {
         })?;
         self.refuse_conversation_tab(&runtime)?;
         let (record, changed) = {
-            let mut registry = self.workspace_registry.lock().unwrap();
+            let mut registry =
+                self.workspace_registry.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             let result = registry.set_frontend_browser_profile(browser_id.as_str(), profile_id)?;
             if result.1 {
                 self.reload_presentation(&registry)?;

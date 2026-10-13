@@ -17,7 +17,7 @@ extension BrowserPageService {
             tabAction("new_tab", "openBrowser", router: router) { call in
                 var args: [String: JSONValue] = [:]
                 for key in ["url", "profile"] {
-                    if let value = call.request.params[key]?.stringValue, !value.isEmpty { args[key] = .string(value) }
+                    if let value = call.request.params[key]?.stringValue, !value.isEmpty { args.updateValue(.string(value), forKey: key) }
                 }
                 return args
             },
