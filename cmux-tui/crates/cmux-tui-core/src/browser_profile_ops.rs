@@ -45,7 +45,12 @@ pub(crate) fn dispatch(
     request: ParsedResourceRequest,
 ) -> Result<Value, ResourceError> {
     debug_assert!(handles(request.envelope.operation));
-    mux.resolve_resource_path(ResourceTarget::Session, &request.selectors)?;
+    if matches!(
+        request.envelope.operation,
+        ResourceOperation::BrowserProfileList | ResourceOperation::BrowserProfileCreate
+    ) {
+        mux.resolve_resource_path(ResourceTarget::Session, &request.selectors)?;
+    }
     let operation = request.envelope.operation.wire_name();
     let fields = &request.fields;
     if request.envelope.operation == ResourceOperation::BrowserProfileList {
@@ -101,19 +106,20 @@ fn resolve(mux: &Mux, selector: &str) -> Result<PersonalBrowserProfile, Resource
     }
     let folded: Vec<_> =
         profiles.iter().filter(|p| p.name.to_lowercase() == selector.to_lowercase()).collect();
+    // validation.invalid on the `profile` field: the catalog's not_found and
+    // ambiguous errors name resource scopes, and a profile is a personal record.
     match folded.as_slice() {
         [profile] => Ok((*profile).clone()),
-        [] => Err(ResourceError::new(
-            "resource.not_found",
+        [] => Err(ResourceError::validation_invalid(
+            Some("profile"),
             format!("no browser profile {selector:?}: `cmux browser profile list` lists them"),
-            json!({"scope": "browser_profile", "id": selector}),
-            false,
         )),
-        _ => Err(ResourceError::new(
-            "selector.ambiguous",
-            format!("more than one browser profile is named {selector:?}: pass its id"),
-            json!({"candidates": folded.iter().map(|p| p.id.clone()).collect::<Vec<_>>()}),
-            false,
+        _ => Err(ResourceError::validation_invalid(
+            Some("profile"),
+            format!(
+                "more than one browser profile is named {selector:?}: pass its id ({})",
+                folded.iter().map(|p| p.id.as_str()).collect::<Vec<_>>().join(", ")
+            ),
         )),
     }
 }
@@ -149,7 +155,13 @@ fn open(
         Some(selector) => resolve(mux, &selector)?.id,
         None => DEFAULT_PROFILE_ID.to_string(),
     };
-    let pane = if request.selectors.pane.is_some() || request.selectors.workspace.is_some() {
+    let named_pane = request.selectors.pane.is_some()
+        || request.selectors.screen.is_some()
+        || request.selectors.workspace.is_some();
+    if !named_pane {
+        mux.resolve_resource_path(ResourceTarget::Session, &request.selectors)?;
+    }
+    let pane = if named_pane {
         let path = mux.resolve_resource_path(ResourceTarget::Pane, &request.selectors)?;
         let public = path.pane.ok_or_else(|| ResourceError::not_found("pane", "pane"))?;
         Some(
