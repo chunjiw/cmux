@@ -84,6 +84,37 @@ impl Mux {
         Ok((record, changed))
     }
 
+    /// Move a frontend-rendered browser to browser profile `profile_id`
+    /// (`frontend-browser-tab-profile-v1`): same surface, same tab id and
+    /// place; `tab-changed` carries the new `browser_profile_id`, and the
+    /// hosting app re-creates the page in that profile's store.
+    pub fn set_frontend_browser_tab_profile(
+        &self,
+        surface: SurfaceId,
+        profile_id: &str,
+    ) -> anyhow::Result<(FrontendBrowserRecord, bool)> {
+        let runtime =
+            self.surface(surface).ok_or_else(|| anyhow::anyhow!("unknown surface {surface}"))?;
+        let browser_id = self.frontend_browser_id(&runtime).ok_or_else(|| {
+            anyhow::anyhow!("surface {surface} is not a frontend-rendered browser")
+        })?;
+        self.refuse_conversation_tab(&runtime)?;
+        let (record, changed) = {
+            let mut registry =
+                self.workspace_registry.lock().unwrap_or_else(PoisonError::into_inner);
+            let result = registry.set_frontend_browser_profile(browser_id.as_str(), profile_id)?;
+            if result.1 {
+                self.reload_presentation(&registry)?;
+            }
+            result
+        };
+        if changed {
+            self.publish_journal_event();
+            self.emit_tab_changed(surface);
+        }
+        Ok((record, changed))
+    }
+
     /// The frontend browser id behind a surface, with the errors
     /// `update_frontend_browser_tab` reports.
     fn require_frontend_browser_id(&self, surface: SurfaceId) -> anyhow::Result<BrowserPublicId> {

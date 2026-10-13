@@ -26,6 +26,7 @@ final class BrowserProfileService {
     @ObservationIgnored private var saving: Task<Void, Never>?
     @ObservationIgnored private var loadWaiters: [CheckedContinuation<Void, Never>] = []
     @ObservationIgnored var homeRecordsObservation: Task<Void, Never>?
+    @ObservationIgnored var recordProfileObservation: Task<Void, Never>?
     @ObservationIgnored var migratingRecords = false
     @ObservationIgnored let logger = Logger(subsystem: "com.cmuxterm.app.next", category: "browser-profiles")
 
@@ -58,6 +59,7 @@ final class BrowserProfileService {
             loadWaiters.removeAll()
             cleanUpDeletedProfiles()
             observeHomeRecords()
+            followRecordProfiles()
             migrateImports()
         }
     }

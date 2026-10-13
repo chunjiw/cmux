@@ -7,7 +7,7 @@ const client_runtime = @import("../client.zig");
 
 pub const schema_version: u16 = 2;
 pub const mux_protocol: u16 = 12;
-pub const ir_sha256 = "374ade89328236fb2b081d417dec69578ac6c1efb7e4c3dd7bdb14bcdd60fa06";
+pub const ir_sha256 = "c17146ec029373ac576db813348341421272454d78d0a480739b4b4ccfb1211a";
 
 pub const ActivitySnapshot = struct {
     attached_clients: u32,
@@ -8534,6 +8534,7 @@ pub fn updateBrowserProfile(client: anytype, request: UpdateBrowserProfileReques
 pub const UpdateFrontendBrowserTabRequest = struct {
     favicon_url: wire.Field([]const u8) = .absent,
     owner: wire.Field([]const u8) = .absent,
+    profile_id: wire.Field([]const u8) = .absent,
     surface: Id,
     title: wire.Field([]const u8) = .absent,
     url: wire.Field([]const u8) = .absent,

@@ -142,18 +142,26 @@ command prints its path; `--out -` writes the PNG to stdout.
 
 The per-tab commands have no saved state, console
 capture, dialogs, downloads, recording or proxies. The REPL has all of them (see "Pick the surface"). Network
-routing, geolocation, offline and viewport emulation, `identify` and profiles
-have no agent surface yet.
+routing, geolocation, offline and viewport emulation and `identify` have no
+agent surface yet.
 
-Some have UI actions that act on the focused browser and return no data:
-`cmux browser screenshot-page`, `browser screenshot-section`,
-`browser toggle-developer-tools`, `browser show-javascript-console`,
-`browser delete-site-data`, `browser new-profile`,
-`browser toggle-design-mode`, `browser toggle-focus-mode`,
-`browser toggle-react-grab`. List them with `cmux action list --noun browser`.
-Page zoom of an app browser tab is `cmux tab <tab_…> zoom in|out|reset`, which
-runs the app's zoom action on the tab's pane (the tab must be the one its pane
-shows); the CLI never writes the browser tab record.
+## Browser profiles
+
+A browser profile has its own cookies, storage, cache and permissions. Make a
+new, empty one for an agent's sign-ins, open tabs in it, or move a tab into it:
+
+```bash
+cmux browser-profile create --name "Research"
+cmux browser-profile new-tab --browser-profile Research --url https://example.com
+cmux browser-profile move-tab --target "tab:$TAB" --browser-profile Research
+cmux --json browser "$TAB" state                         # "profile": the tab's profile id
+```
+
+`move-tab` keeps the tab (same id and position): the daemon moves the tab
+record and the page reloads at the same URL in the target profile's store. The
+back/forward list starts over and unsaved form input is lost. `tab new-browser
+--profile agent` opens a tab in the clean agent profile. Do not move a tab into
+the person's own profile unless they asked for it.
 
 ## Troubleshooting
 

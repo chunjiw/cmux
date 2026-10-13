@@ -167,6 +167,7 @@ impl CmuxClient {
                 Update::Set(url) => Optional::Value(url),
             },
             owner: optional(update.owner),
+            profile_id: Optional::Missing,
         })?;
         let text = |key: &str| result.get(key).and_then(Value::as_str).map(str::to_string);
         let updated = || -> Option<FrontendBrowserTabUpdated> {

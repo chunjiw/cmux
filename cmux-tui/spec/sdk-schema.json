@@ -16452,6 +16452,15 @@
       "presence": "optional",
       "nullable": true,
       "default": null
+     },
+     "profile_id": {
+      "type": {
+       "kind": "scalar",
+       "name": "string"
+      },
+      "presence": "optional",
+      "nullable": true,
+      "default": null
      }
     },
     "additional_properties": false

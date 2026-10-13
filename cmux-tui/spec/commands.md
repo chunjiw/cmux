@@ -2027,6 +2027,14 @@ absent field is unchanged and `favicon_url:null` clears the favicon. A change
 persists durably and emits `title-changed` (when the title changed) and
 `tab-changed`. Fails for a tab that is not frontend-rendered.
 
+With capability `frontend-browser-tab-profile-v1`, `profile_id` moves the tab
+to another browser profile in place: the surface, tab id and position stay,
+the record's `profile_id` changes, and `tab-changed` carries the new
+`browser_profile_id`. The hosting app then re-creates the page in that
+profile's store (cookies, local and session storage, IndexedDB, cache,
+service workers, permissions), which loads the URL again. A bad id is refused
+before any field is written.
+
 Params:
 
 | Name | JSON type | Required/default | Constraints |
@@ -2036,11 +2044,12 @@ Params:
 | `title` | string | optional | As in `new-frontend-browser-tab` |
 | `favicon_url` | string or null | optional | As `url`; null clears |
 | `owner` | string | optional | As in `new-frontend-browser-tab` |
+| `profile_id` | string | optional | `default` or a lowercase UUID (`frontend-browser-tab-profile-v1`) |
 
 Result:
 
 ```text
-object{surface:Id, url:string, title:string|null, favicon_url:string|null, owner:string|null, changed:bool}
+object{surface:Id, url:string, title:string|null, favicon_url:string|null, owner:string|null, profile_id:string|null, changed:bool}
 ```
 
 ### restart-tab
