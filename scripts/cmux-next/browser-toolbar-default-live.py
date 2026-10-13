@@ -33,7 +33,7 @@ os.makedirs(opts.out, exist_ok=True)
 if not opts.socket and not opts.tag:
     parser.error("--tag or --socket is required")
 SOCKET = opts.socket or f"/tmp/cmux-debug-{opts.tag}.sock"
-URL = "data:text/html,<title>toolbar</title><p>browser toolbar check</p>"
+URL = "https://example.com/"
 failures = []
 
 
@@ -102,8 +102,10 @@ def buttons():
 
 
 def write_config(text):
-    with open(CONFIG, "w") as f:
+    # Whole-file replace, so the config watcher never reads a half-written file.
+    with open(CONFIG + ".tmp", "w") as f:
         f.write(text)
+    os.replace(CONFIG + ".tmp", CONFIG)
 
 
 def snapshot(name):
