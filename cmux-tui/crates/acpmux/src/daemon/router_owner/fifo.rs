@@ -190,4 +190,3 @@ fn make_owner_fifo(fifo: &std::path::Path) -> std::io::Result<()> {
     }
     Ok(())
 }
-
