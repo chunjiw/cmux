@@ -2370,6 +2370,1176 @@
    },
    "type": "phone",
    "origin": "chrome"
+  },
+  {
+   "order": 27.2,
+   "show-by-default": true,
+   "title": "iPhone 17",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 402,
+     "height": 874
+    },
+    "horizontal": {
+     "width": 874,
+     "height": 402
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 62,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "pill",
+      "x": 139,
+      "y": 14,
+      "width": 125,
+      "height": 37,
+      "border-radius": 19
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 62,
+      "top": 0,
+      "right": 62,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/iphone-17/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1206x2622 @3x (Apple specs: 2622-by-1206 at 460 ppi; HIG: 402x874 pt). Safe-area insets and cutout copied from Chrome's 'iPhone 16 Pro' entry (identical CSS size 402x874); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.3,
+   "show-by-default": true,
+   "title": "iPhone Air",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 420,
+     "height": 912
+    },
+    "horizontal": {
+     "width": 912,
+     "height": 420
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/iphone-air/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1260x2736 @3x (Apple specs: 2736-by-1260 at 460 ppi; HIG: 420x912 pt). No modes: no sourced safe-area insets for this CSS size. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.4,
+   "show-by-default": false,
+   "title": "iPhone 17 Pro",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 402,
+     "height": 874
+    },
+    "horizontal": {
+     "width": 874,
+     "height": 402
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 62,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "pill",
+      "x": 139,
+      "y": 14,
+      "width": 125,
+      "height": 37,
+      "border-radius": 19
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 62,
+      "top": 0,
+      "right": 62,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.ios-resolution.com/",
+    "https://yesviz.com/viewport/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1206x2622 @3x (HIG: 402x874 pt, 1206x2622 px @3x). apple.com/iphone-17-pro/specs now shows the iPhone 18 Pro lineup, so the Apple pixel figure comes from the archived HIG table. Safe-area insets and cutout copied from Chrome's 'iPhone 16 Pro' entry (identical CSS size 402x874); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.5,
+   "show-by-default": true,
+   "title": "iPhone 17 Pro Max",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 440,
+     "height": 956
+    },
+    "horizontal": {
+     "width": 956,
+     "height": 440
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 62,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "pill",
+      "x": 158,
+      "y": 14,
+      "width": 125,
+      "height": 37,
+      "border-radius": 19
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 62,
+      "top": 0,
+      "right": 62,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.ios-resolution.com/",
+    "https://yesviz.com/viewport/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1320x2868 @3x (HIG: 440x956 pt, 1320x2868 px @3x). Safe-area insets and cutout copied from Chrome's 'iPhone 16 Pro Max' entry (identical CSS size 440x956); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.1,
+   "show-by-default": false,
+   "title": "iPhone 17e",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 390,
+     "height": 844
+    },
+    "horizontal": {
+     "width": 844,
+     "height": 390
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 47,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "notch",
+      "x": 114,
+      "y": 0,
+      "width": 162,
+      "height": 34,
+      "upper-radius": 5,
+      "lower-radius": 22
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 47,
+      "top": 0,
+      "right": 47,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://www.apple.com/iphone-17e/specs/",
+    "https://www.ios-resolution.com/",
+    "https://yesviz.com/viewport/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1170x2532 @3x (Apple specs: 2532-by-1170 at 460 ppi). Not in the archived HIG table; 390x844 and scale 3 come from ios-resolution.com and yesviz.com. Safe-area insets and cutout copied from Chrome's 'iPhone 16e' entry (identical CSS size 390x844); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2026-03",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.6,
+   "show-by-default": true,
+   "title": "iPhone 18 Pro",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 402,
+     "height": 874
+    },
+    "horizontal": {
+     "width": 874,
+     "height": 402
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 62,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "pill",
+      "x": 139,
+      "y": 14,
+      "width": 125,
+      "height": 37,
+      "border-radius": 19
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 62,
+      "top": 0,
+      "right": 62,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://www.apple.com/iphone-18-pro/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1206x2622 @3x (Apple specs: 2622-by-1206 at 460 ppi). Points and scale from ios-resolution.com (HIG device table was removed on 2026-09-09). Ships with iOS 27. Safe-area insets and cutout copied from Chrome's 'iPhone 16 Pro' entry (identical CSS size 402x874); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2026-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 27.7,
+   "show-by-default": false,
+   "title": "iPhone 18 Pro Max",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 440,
+     "height": 956
+    },
+    "horizontal": {
+     "width": 956,
+     "height": 440
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 62,
+      "right": 0,
+      "bottom": 34
+     },
+     "cutout": {
+      "shape": "pill",
+      "x": 158,
+      "y": 14,
+      "width": 125,
+      "height": 37,
+      "border-radius": 19
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 62,
+      "top": 0,
+      "right": 62,
+      "bottom": 21
+     }
+    }
+   ],
+   "sources": [
+    "https://www.apple.com/iphone-18-pro/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Physical 1320x2868 @3x (Apple specs: 2868-by-1320 at 460 ppi). Points and scale from ios-resolution.com. Ships with iOS 27. Safe-area insets and cutout copied from Chrome's 'iPhone 16 Pro Max' entry (identical CSS size 440x956); not measured on this device. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2026-09",
+   "origin": "cmux"
+  },
+  {
+   "order": 45.5,
+   "show-by-default": true,
+   "title": "iPhone Duo",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 466,
+     "height": 678
+    },
+    "horizontal": {
+     "width": 678,
+     "height": 466
+    },
+    "device-pixel-ratio": 3,
+    "vertical-spanned": {
+     "width": 626,
+     "height": 890
+    },
+    "horizontal-spanned": {
+     "width": 890,
+     "height": 626
+    }
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPhone",
+    "mobile": true
+   },
+   "sources": [
+    "https://www.apple.com/iphone-duo/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "Foldable. Modeled as the 5.4-inch outer (cover) display only: 1398x2034 px at 460 ppi (Apple specs), 466x678 pt @3x (ios-resolution.com). Inner 7.6-inch folding display is 1878x2670 px at 430 ppi (Apple specs) = 626x890 pt @3x (ios-resolution.com); it is one continuous viewport, no hinge/spanned data is sourced, so no foldable-screen modes. ios-resolution.com lists release 2026-10-23. Scale factor is from ios-resolution.com, not Apple. No modes: no sourced safe-area insets for this CSS size. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used. cmux: the inner screen is the unfolded (spanned) orientation, 626x890 CSS px at 3x (1878x2670 px, Apple specs; scale from ios-resolution.com); it is one continuous panel, so no hinge and no display feature.",
+   "released": "2026-10",
+   "foldable-screen": true,
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical"
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal"
+    },
+    {
+     "title": "spanned",
+     "orientation": "vertical-spanned"
+    },
+    {
+     "title": "spanned",
+     "orientation": "horizontal-spanned"
+    }
+   ],
+   "origin": "cmux"
+  },
+  {
+   "order": 41,
+   "show-by-default": true,
+   "title": "iPad Pro 11",
+   "type": "tablet",
+   "screen": {
+    "vertical": {
+     "width": 834,
+     "height": 1210
+    },
+    "horizontal": {
+     "width": 1210,
+     "height": 834
+    },
+    "device-pixel-ratio": 2
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPad",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/ipad-pro/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "M5 (and M4) 11-inch: 2420x1668 px at 264 ppi (Apple specs), 834x1210 pt @2x (HIG). UA follows Chrome's 'iPad Pro 13' convention (desktop-class Mac UA). UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-10",
+   "origin": "cmux"
+  },
+  {
+   "order": 40.3,
+   "show-by-default": true,
+   "title": "iPad Air 11",
+   "type": "tablet",
+   "screen": {
+    "vertical": {
+     "width": 820,
+     "height": 1180
+    },
+    "horizontal": {
+     "width": 1180,
+     "height": 820
+    },
+    "device-pixel-ratio": 2
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPad",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/ipad-air/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "M4 iPad Air 11-inch: 2360x1640 px at 264 ppi (Apple specs), 820x1180 pt @2x (HIG). Release month from ios-resolution.com (8th gen). Desktop-class Mac UA as in Chrome's 'iPad Pro 13'. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2026-03",
+   "origin": "cmux"
+  },
+  {
+   "order": 40.4,
+   "show-by-default": false,
+   "title": "iPad Air 13",
+   "type": "tablet",
+   "screen": {
+    "vertical": {
+     "width": 1024,
+     "height": 1366
+    },
+    "horizontal": {
+     "width": 1366,
+     "height": 1024
+    },
+    "device-pixel-ratio": 2
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPad",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/ipad-air/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "M4 iPad Air 13-inch: 2732x2048 px at 264 ppi (Apple specs), 1024x1366 pt @2x (HIG). Desktop-class Mac UA as in Chrome's 'iPad Pro 13'. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2026-03",
+   "origin": "cmux"
+  },
+  {
+   "order": 40.1,
+   "show-by-default": false,
+   "title": "iPad mini (A17 Pro)",
+   "type": "tablet",
+   "screen": {
+    "vertical": {
+     "width": 744,
+     "height": 1133
+    },
+    "horizontal": {
+     "width": 1133,
+     "height": 744
+    },
+    "device-pixel-ratio": 2
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (iPad; CPU OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPad",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/ipad-mini/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "8.3-inch: 2266x1488 px at 326 ppi (Apple specs), 744x1133 pt @2x (HIG). Chrome's 'iPad Mini' is the older 768x1024 model. Desktop-class Mac UA as in Chrome's 'iPad Pro 13'. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used. cmux: the UA follows Chrome's 'iPad Mini' convention (the mobile iPad UA; Safari on iPad mini asks for mobile sites by default), not the Mac UA of the larger iPads.",
+   "released": "2024-10",
+   "origin": "cmux"
+  },
+  {
+   "order": 40.2,
+   "show-by-default": false,
+   "title": "iPad (A16)",
+   "type": "tablet",
+   "screen": {
+    "vertical": {
+     "width": 820,
+     "height": 1180
+    },
+    "horizontal": {
+     "width": 1180,
+     "height": 820
+    },
+    "device-pixel-ratio": 2
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+   "user-agent-metadata": {
+    "platform": "iOS",
+    "platformVersion": "18.6",
+    "architecture": "",
+    "model": "iPad",
+    "mobile": true
+   },
+   "sources": [
+    "https://web.archive.org/web/20260702060104/https://developer.apple.com/tutorials/data/design/human-interface-guidelines/layout.json",
+    "https://www.apple.com/ipad-11/specs/",
+    "https://www.ios-resolution.com/",
+    "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
+   ],
+   "notes": "iPad 11-inch (A16): 2360x1640 px at 264 ppi (Apple specs), 820x1180 pt @2x (HIG). Desktop-class Mac UA as in Chrome's 'iPad Pro 13'. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used.",
+   "released": "2025-03",
+   "origin": "cmux"
+  },
+  {
+   "order": 37.1,
+   "show-by-default": true,
+   "title": "Pixel 10 Pro",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 427,
+     "height": 952
+    },
+    "horizontal": {
+     "width": 952,
+     "height": 427
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "Pixel 10 Pro",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 68,
+      "right": 0,
+      "bottom": 0
+     },
+     "cutout": {
+      "shape": "circle",
+      "x": 195,
+      "y": 0,
+      "width": 36,
+      "height": 68,
+      "cx": 213,
+      "cy": 34,
+      "radius": 16
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 0,
+      "right": 68,
+      "bottom": 0
+     }
+    }
+   ],
+   "sources": [
+    "https://android.googlesource.com/platform/tools/base/+/refs/heads/mirror-goog-studio-main/sdklib/src/main/resources/com/android/sdklib/devices/nexus.xml",
+    "https://store.google.com/us/product/pixel_10_pro_specs?hl=en-US",
+    "https://blog.google/products/pixel/google-pixel-10-pro-xl/"
+   ],
+   "notes": "Physical 1280x2856 at 495 PPI (Google Store). Android Studio device definition: 1280x2856, xxhdpi (DPR 3). 1280/3 = 426.67, rounded to 427 like Chrome's identical 'Pixel 9 Pro'. Android 16 from Google Store specs. Safe-area insets and cutout copied from Chrome's 'Pixel 9 Pro' entry (identical CSS size 427x952 and DPR); not measured on this device.",
+   "released": "2025-08",
+   "origin": "cmux"
+  },
+  {
+   "order": 37.2,
+   "show-by-default": false,
+   "title": "Pixel 10 Pro XL",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 448,
+     "height": 997
+    },
+    "horizontal": {
+     "width": 997,
+     "height": 448
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "Pixel 10 Pro XL",
+    "mobile": true
+   },
+   "modes": [
+    {
+     "title": "default",
+     "orientation": "vertical",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 66,
+      "right": 0,
+      "bottom": 0
+     },
+     "cutout": {
+      "shape": "circle",
+      "x": 205,
+      "y": 0,
+      "width": 38,
+      "height": 66,
+      "cx": 224,
+      "cy": 33,
+      "radius": 16
+     }
+    },
+    {
+     "title": "default",
+     "orientation": "horizontal",
+     "safe-area-insets": {
+      "left": 0,
+      "top": 0,
+      "right": 66,
+      "bottom": 0
+     }
+    }
+   ],
+   "sources": [
+    "https://android.googlesource.com/platform/tools/base/+/refs/heads/mirror-goog-studio-main/sdklib/src/main/resources/com/android/sdklib/devices/nexus.xml",
+    "https://store.google.com/us/product/pixel_10_pro_specs?hl=en-US",
+    "https://blog.google/products/pixel/google-pixel-10-pro-xl/"
+   ],
+   "notes": "Physical 1344x2992 at 486 PPI (Google Store). Android Studio: 1344x2992, xxhdpi (DPR 3). 2992/3 = 997.33 -> 997 like Chrome's identical 'Pixel 9 Pro XL'. Safe-area insets and cutout copied from Chrome's 'Pixel 9 Pro XL' entry (identical CSS size 448x997 and DPR); not measured on this device.",
+   "released": "2025-08",
+   "origin": "cmux"
+  },
+  {
+   "order": 37.3,
+   "show-by-default": false,
+   "title": "Pixel 10a",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 924
+    },
+    "horizontal": {
+     "width": 924,
+     "height": 412
+    },
+    "device-pixel-ratio": 2.625
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; Pixel 10a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "Pixel 10a",
+    "mobile": true
+   },
+   "sources": [
+    "https://android.googlesource.com/platform/tools/base/+/refs/heads/mirror-goog-studio-main/sdklib/src/main/resources/com/android/sdklib/devices/nexus.xml",
+    "https://store.google.com/us/product/pixel_10a_specs?hl=en-US",
+    "https://en.wikipedia.org/wiki/Pixel_10a"
+   ],
+   "notes": "Physical 1080x2424 at 422 PPI (Google Store). Android Studio: 1080x2424, 420dpi (DPR 2.625). 1080/2.625 = 411.43, 2424/2.625 = 923.43; rounded to 412x924 like Chrome's 'Pixel 10'/'Pixel 9' (same panel and density). Modes omitted: Chrome's Pixel 10 insets were not reused because the 10a has a different front design. Release date (on sale 2026-03-05) from Wikipedia.",
+   "released": "2026-03",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.1,
+   "show-by-default": false,
+   "title": "Galaxy S25",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 360,
+     "height": 780
+    },
+    "horizontal": {
+     "width": 780,
+     "height": 360
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 15; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "15",
+    "architecture": "",
+    "model": "SM-S931B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s25/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s25/buy/"
+   ],
+   "notes": "Physical 1080x2340, DPR 3 (yesviz.com); 1080/3 x 2340/3 = 360x780 exact. Model SM-S931B from samsung.com/uk. Android 15 (yesviz.com).",
+   "released": "2025-01",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.2,
+   "show-by-default": false,
+   "title": "Galaxy S25+",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 891
+    },
+    "horizontal": {
+     "width": 891,
+     "height": 412
+    },
+    "device-pixel-ratio": 3.5
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 15; SM-S936B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "15",
+    "architecture": "",
+    "model": "SM-S936B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s25+/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s25/buy/"
+   ],
+   "notes": "Physical 1440x3120, DPR 3.5 (yesviz.com). 1440/3.5 = 411.43, 3120/3.5 = 891.43; yesviz.com gives 412x891. Chrome-style ceil rounding (e.g. Chrome 'Samsung Galaxy S20 Ultra' 914.29 -> 915) would give 412x892, and yesviz itself lists the same panel on Pixel 7 Pro as 412x892, so the height may be off by 1. Samsung ships these at FHD+ by default; the 3.5 DPR models the WQHD+ setting, as Chrome's S20 Ultra entry does. Model SM-S936B from samsung.com/uk.",
+   "released": "2025-01",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.3,
+   "show-by-default": false,
+   "title": "Galaxy S25 Ultra",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 891
+    },
+    "horizontal": {
+     "width": 891,
+     "height": 412
+    },
+    "device-pixel-ratio": 3.5
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 15; SM-S938B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "15",
+    "architecture": "",
+    "model": "SM-S938B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s25-ultra/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s25-ultra/buy/"
+   ],
+   "notes": "Physical 1440x3120, DPR 3.5 (yesviz.com). 1440/3.5 = 411.43, 3120/3.5 = 891.43; yesviz.com gives 412x891. Chrome-style ceil rounding (e.g. Chrome 'Samsung Galaxy S20 Ultra' 914.29 -> 915) would give 412x892, and yesviz itself lists the same panel on Pixel 7 Pro as 412x892, so the height may be off by 1. Samsung ships these at FHD+ by default; the 3.5 DPR models the WQHD+ setting, as Chrome's S20 Ultra entry does. Model SM-S938B from samsung.com/uk.",
+   "released": "2025-01",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.4,
+   "show-by-default": false,
+   "title": "Galaxy S25 Edge",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 891
+    },
+    "horizontal": {
+     "width": 891,
+     "height": 412
+    },
+    "device-pixel-ratio": 3.5
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 15; SM-S937B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "15",
+    "architecture": "",
+    "model": "SM-S937B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s25-edge/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s25-ultra/buy/"
+   ],
+   "notes": "Physical 1440x3120, DPR 3.5 (yesviz.com). 1440/3.5 = 411.43, 3120/3.5 = 891.43; yesviz.com gives 412x891. Chrome-style ceil rounding (e.g. Chrome 'Samsung Galaxy S20 Ultra' 914.29 -> 915) would give 412x892, and yesviz itself lists the same panel on Pixel 7 Pro as 412x892, so the height may be off by 1. Samsung ships these at FHD+ by default; the 3.5 DPR models the WQHD+ setting, as Chrome's S20 Ultra entry does. Model SM-S937B from samsung.com/uk.",
+   "released": "2025-05",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.5,
+   "show-by-default": false,
+   "title": "Galaxy S26",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 360,
+     "height": 780
+    },
+    "horizontal": {
+     "width": 780,
+     "height": 360
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; SM-S942B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "SM-S942B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s26/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s26/buy/"
+   ],
+   "notes": "Physical 1080x2340, DPR 3 (yesviz.com); 360x780 exact. Model SM-S942B from samsung.com/uk. Android 16 (yesviz.com).",
+   "released": "2026-02",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.6,
+   "show-by-default": false,
+   "title": "Galaxy S26+",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 891
+    },
+    "horizontal": {
+     "width": 891,
+     "height": 412
+    },
+    "device-pixel-ratio": 3.5
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; SM-S947B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "SM-S947B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s26%2B/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s26/buy/"
+   ],
+   "notes": "Physical 1440x3120, DPR 3.5 (yesviz.com). 1440/3.5 = 411.43, 3120/3.5 = 891.43; yesviz.com gives 412x891. Chrome-style ceil rounding (e.g. Chrome 'Samsung Galaxy S20 Ultra' 914.29 -> 915) would give 412x892, and yesviz itself lists the same panel on Pixel 7 Pro as 412x892, so the height may be off by 1. Samsung ships these at FHD+ by default; the 3.5 DPR models the WQHD+ setting, as Chrome's S20 Ultra entry does. Model SM-S947B from samsung.com/uk.",
+   "released": "2026-02",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.7,
+   "show-by-default": true,
+   "title": "Galaxy S26 Ultra",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 412,
+     "height": 891
+    },
+    "horizontal": {
+     "width": 891,
+     "height": 412
+    },
+    "device-pixel-ratio": 3.5
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; SM-S948B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "SM-S948B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-s26-ultra/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-s26-ultra/buy/"
+   ],
+   "notes": "Physical 1440x3120, DPR 3.5 (yesviz.com). 1440/3.5 = 411.43, 3120/3.5 = 891.43; yesviz.com gives 412x891. Chrome-style ceil rounding (e.g. Chrome 'Samsung Galaxy S20 Ultra' 914.29 -> 915) would give 412x892, and yesviz itself lists the same panel on Pixel 7 Pro as 412x892, so the height may be off by 1. Samsung ships these at FHD+ by default; the 3.5 DPR models the WQHD+ setting, as Chrome's S20 Ultra entry does. Model SM-S948B from samsung.com/uk.",
+   "released": "2026-02",
+   "origin": "cmux"
+  },
+  {
+   "order": 38.8,
+   "show-by-default": true,
+   "title": "Galaxy Z Flip 7",
+   "type": "phone",
+   "screen": {
+    "vertical": {
+     "width": 360,
+     "height": 840
+    },
+    "horizontal": {
+     "width": 840,
+     "height": 360
+    },
+    "device-pixel-ratio": 3
+   },
+   "capabilities": [
+    "touch",
+    "mobile"
+   ],
+   "user-agent": "Mozilla/5.0 (Linux; Android 16; SM-F766B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Mobile Safari/537.36",
+   "user-agent-metadata": {
+    "platform": "Android",
+    "platformVersion": "16",
+    "architecture": "",
+    "model": "SM-F766B",
+    "mobile": true
+   },
+   "sources": [
+    "https://yesviz.com/devices/samsung-z-flip7/",
+    "https://yesviz.com/viewport/",
+    "https://www.samsung.com/uk/smartphones/galaxy-z-flip7/buy/"
+   ],
+   "notes": "Main (unfolded) 6.9-inch display only: 1080x2520, DPR 3 (yesviz.com); 360x840 exact. The cover screen is not modeled (no sourced viewport). Model SM-F766B from samsung.com/uk. Android 16 (yesviz.com).",
+   "released": "2025-07",
+   "origin": "cmux"
   }
  ]
 }
