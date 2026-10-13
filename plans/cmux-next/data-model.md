@@ -296,9 +296,9 @@ that profile's `CefRequestContext`), which loads the same URL. Back/forward
 history and unsaved form input stay behind: page state must not cross
 profiles. A page made later (asleep, deferred) wakes in the record's profile
 without the old history. A tab of another machine's tree, or a daemon without
-the capability, gets the old move (the URL reopens in a new tab). Agents use
-`cmux browser profiles [create]`, `new-tab --profile` and `set-profile`
-(`browser.profiles.list|create`, `browser.page.new_tab|set_profile`).
+the capability, gets the old move (the URL reopens in a new tab). The app's page swap
+follows the record (`BrowserProfileService.followRecordProfiles`), so any daemon
+client that moves the record moves the page.
 
 Display: the omnibar shows the tab's browser profile (dot or icon, name in the
 tooltip and Page Info) whenever more than one exists; a tab whose browser

@@ -40,6 +40,19 @@ extension BrowserProfileService {
         return try await connection.createBrowserProfile(request).browserProfile.id
     }
 
+    /// `createProfile` from a synchronous handler: validation errors throw
+    /// now; the daemon write runs in the background.
+    func createProfileNow(name: String, color: String?, icon: String?) throws {
+        guard usesDaemonRecords else {
+            try edit { try $0.create(name: name, color: color, icon: icon) }
+            return
+        }
+        let request = CreateBrowserProfileRequest(id: BrowserProfileRecord.newID(), name: try BrowserProfileBook.validName(name),
+                                                  color: try BrowserProfileBook.validColor(color),
+                                                  icon: try BrowserProfileBook.validIcon(icon))
+        services.machines.local.send("create-browser-profile") { try await $0.createBrowserProfile(request) }
+    }
+
     func rename(_ id: String, to name: String) throws {
         guard usesDaemonRecords else { return try edit { try $0.rename(id, to: name) } }
         try update(UpdateBrowserProfileRequest(id: id, name: try BrowserProfileBook.validName(name)))

@@ -26,6 +26,7 @@ final class BrowserProfileService {
     @ObservationIgnored private var saving: Task<Void, Never>?
     @ObservationIgnored private var loadWaiters: [CheckedContinuation<Void, Never>] = []
     @ObservationIgnored var homeRecordsObservation: Task<Void, Never>?
+    @ObservationIgnored var recordProfileObservation: Task<Void, Never>?
     @ObservationIgnored var migratingRecords = false
     @ObservationIgnored let logger = Logger(subsystem: "com.cmuxterm.app.next", category: "browser-profiles")
 
@@ -58,6 +59,7 @@ final class BrowserProfileService {
             loadWaiters.removeAll()
             cleanUpDeletedProfiles()
             observeHomeRecords()
+            followRecordProfiles()
             migrateImports()
         }
     }
@@ -78,12 +80,6 @@ final class BrowserProfileService {
     }
 
     func record(_ id: String?) -> BrowserProfileRecord? { id.flatMap { id in ordered.first { $0.id == id } } }
-
-    /// The profile with id `text`, else the first whose name matches it (case and diacritics ignored).
-    func record(idOrName text: String) -> BrowserProfileRecord? {
-        let fold = { (name: String) in name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) }
-        return record(text) ?? ordered.first { fold($0.name) == fold(text) }
-    }
 
     /// A tab record's profile id as the name users see.
     func displayName(_ id: String?) -> String {

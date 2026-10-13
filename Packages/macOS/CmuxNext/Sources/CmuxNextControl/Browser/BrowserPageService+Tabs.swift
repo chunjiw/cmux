@@ -1,32 +1,21 @@
 public import CmuxNextSettings
 import Foundation
 
-/// `browser.page.tabs|new_tab|select_tab|close|set_profile`: the old `cmux
-/// browser tab list|new|switch|close`, and Move Tab to Browser Profile. Open,
-/// select, close and move run the registry actions the keyboard, menu and
-/// `cmux tab …` run (`openBrowser`, `tab.focus`, `closeTab`,
-/// `browserProfile.moveTab`) with `action.run`'s contract, on a tab checked
-/// to be an app browser tab first, so `page` never closes a focused
-/// terminal. The request's `idempotency_key` goes with it, so a retried run
-/// is one run. `profile` (an id, a name, or `agent`) picks the browser
-/// profile of a new tab or the one a tab moves to.
+/// `browser.page.tabs|new_tab|select_tab|close`: the old `cmux browser tab
+/// list|new|switch|close`. Open, select and close run the registry actions
+/// the keyboard, menu and `cmux tab …` run (`openBrowser`, `tab.focus`,
+/// `closeTab`) with `action.run`'s contract, on a tab checked to be an app
+/// browser tab first, so `page` never closes a focused terminal. The
+/// request's `idempotency_key` goes with it, so a retried run is one run.
 extension BrowserPageService {
     func tabMethods(router: ControlRouter) -> [ControlMethod] {
         [
             .snapshot("browser.page.tabs") { call in try Self.tabList(call) },
             tabAction("new_tab", "openBrowser", router: router) { call in
-                var args: [String: JSONValue] = [:]
-                for key in ["url", "profile"] {
-                    if let value = call.request.params[key]?.stringValue, !value.isEmpty { args.updateValue(.string(value), forKey: key) }
-                }
-                return args
+                call.request.params["url"]?.stringValue.flatMap { $0.isEmpty ? nil : ["url": .string($0)] } ?? [:]
             },
             tabAction("select_tab", "tab.focus", router: router) { _ in [:] },
             tabAction("close", "closeTab", router: router) { _ in [:] },
-            // The tab keeps its id and place; its page reloads in the profile's store.
-            tabAction("set_profile", "browserProfile.moveTab", router: router) { call in
-                call.request.params["profile"]?.stringValue.flatMap { $0.isEmpty ? nil : ["browserProfile": .string($0)] } ?? [:]
-            },
         ]
     }
 
@@ -70,7 +59,6 @@ extension BrowserPageService {
                             "id": .string(tab.id), "title": .string(tab.name ?? tab.title), "url": .optional(tab.url),
                             "workspace": .string(workspace.publicID), "pane": .string(pane.id),
                             "selected": .bool(pane.selectedTabID == tab.id), "focused": .bool(topology.focus.tabID == tab.id),
-                            "profile": .string(tab.browserProfileID ?? "default"),
                         ])
                     }
                 }

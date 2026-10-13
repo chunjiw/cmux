@@ -167,9 +167,7 @@ On `feat-cmux-next-browser-tabs` (browser group 2):
   `action.run` (same work queue, wait, idempotency key, `sequence` and `created` ids as
   the keyboard and `cmux tab …`). CLI: `cmux browser <tab_…|page> tabs [--all] | new-tab
   [URL] | select | close [--no-wait]`, the old `cmux browser tab list|new|switch|close`
-  (by tab id; the old index form is gone). Later (cx-d0d.83): `new-tab --profile P`,
-  `set-profile P` (`browser.page.set_profile`, runs `browserProfile.moveTab` in place), and
-  `cmux browser profiles [create [NAME] [--color C] [--icon I]]` (`browser.profiles.list|create`).
+  (by tab id; the old index form is gone).
 
 On `feat-cmux-next-browser-input` (browser group 4):
 

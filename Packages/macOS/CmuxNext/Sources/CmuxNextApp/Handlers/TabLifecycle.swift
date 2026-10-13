@@ -191,7 +191,7 @@ enum TabLifecycle {
             return
         }
         let url = plan.url
-        let rawProfile = invocation["profile"]?.stringValue.map { $0.lowercased() == "agent" ? $0 : ctx.services.browserProfiles.record(idOrName: $0)?.id ?? $0 }
+        let rawProfile = invocation["profile"]?.stringValue
         guard let profileRequest = AgentBrowserProfile.request(rawProfile) else {
             return ctx.refuse(MiscHandlerStrings.unknownBrowserProfile(rawProfile ?? ""))
         }

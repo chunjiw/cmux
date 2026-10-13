@@ -1,7 +1,7 @@
 import CmuxNextActions
 import CmuxNextBrowser
 import CmuxNextDaemon
-import CmuxNextWakeups
+import CmuxNextCompat
 import Foundation
 
 /// Moving and duplicating a tab into another browser profile. A page's
@@ -9,27 +9,44 @@ import Foundation
 /// its profile's store, so only the URL goes to the target; a move keeps the
 /// tab and reloads its page there, a duplicate opens a new tab (data-model.md 5).
 extension BrowserProfileService {
-    /// Moves `tab` to `profile` in place: the record names it (`frontend-browser-tab-profile-v1`), then the page
-    /// is re-made in its store (`recreatePage`). Another machine's tab or an older daemon: the old reopen.
+    /// Moves `tab` to `profile` in place: the daemon changes the record (`frontend-browser-tab-profile-v1`),
+    /// and `followRecordProfiles` re-makes the page in the new store. Another machine's tab or an older
+    /// daemon: the URL reopens in a new tab and the original closes.
     func move(_ tab: TabModel, in pane: PaneModel, to profile: String, notice: String?) {
         let daemon = services.machines.daemon(forTab: tab)
         guard daemon.isLocal, daemon.supports(DaemonCapabilities.shared.frontendBrowserTabProfile) else {
             return reopen(tab, in: pane, profile: profile, closingOriginal: true, notice: notice)
         }
-        let (key, surface, cache, url) = (tab.id, tab.surface, services.cache, URL(string: currentURL(of: tab)) ?? StaticURL.blank.url)
-        services.registry.track(Task { @MainActor [weak self] in
-            if let failed = await daemon.failure("set-frontend-browser-tab-profile", {
-                try await $0.setFrontendBrowserTabProfile(surface, profileID: profile)
-            }) { return failed }
-            // The page's store comes from the record: wait for the mirror to show it.
-            guard await ObservedCondition(owner: "BrowserProfileService.move", deadline: .seconds(5)).wait({
-                (cache.tabModel(key)?.snapshot.browserProfileID ?? BrowserProfileRecord.defaultID) == profile
-            }), let self else { return "set-frontend-browser-tab-profile: the moved tab was not reported back" }
-            if let notice { cache.browserTabs.setNotice(notice, forKey: key) }  // the new page shows it
-            cache.recreatePage(key, in: book.engineProfile(for: profile), url: url)
-            refreshPresentation()
-            return nil
-        })
+        if let notice { services.cache.browserTabs.setNotice(notice, forKey: tab.id) }  // the new page shows it
+        let surface = tab.surface
+        daemon.send("set-frontend-browser-tab-profile") { try await $0.setFrontendBrowserTabProfile(surface, profileID: profile) }
+    }
+
+    /// The engine adapter half of a move: whenever a live web page's store differs from the one its tab
+    /// record names (the daemon moved the tab), the page is re-made in the record's store
+    /// (`TabContentCache.recreatePage`). Event-driven: tab records and page installs are observed.
+    func followRecordProfiles() {
+        recordProfileObservation?.cancel()
+        recordProfileObservation = Task { [weak self] in
+            for await stale in ObservationStream({ [weak self] in self?.pagesInOtherStores() ?? [] }) {
+                for (key, profile, url) in stale { self?.services.cache.recreatePage(key, in: profile, url: url) }
+            }
+        }
+    }
+
+    /// Live web pages of this Mac's tab records whose store is not the one the record names.
+    private func pagesInOtherStores() -> [(String, BrowserProfileID, URL)] {
+        let cache = services.cache
+        _ = cache.pageInstalls.revision
+        return cache.browsers.compactMap { key, entry in
+            let page = entry.tab
+            guard page is WebKitTab || page is CEFTab, let tab = cache.browserTabs.tabModel(key), tab.isFrontendOwned,
+                  services.machines.daemon(forTab: tab).isLocal, !cache.browserTabs.isIncognitoTab(key) else { return nil }
+            let profile = book.engineProfile(for: tab.browserProfileID)
+            guard page.profileID != profile, let url = page.state.url ?? tab.url.flatMap(URL.init(string:)),
+                  ["http", "https", "about"].contains(url.scheme ?? "") else { return nil }
+            return (key, profile, url)
+        }
     }
 
     /// Reopens `tab`'s current URL in `profile` on the same engine in the

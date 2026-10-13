@@ -26,9 +26,6 @@ pub(super) const SCREENSHOT_TIMEOUT: Duration = Duration::from_secs(35);
 pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, UsageError> {
     let messages = &crate::localization::catalog().app_control;
     let usage = || UsageError::new(messages.browser_page_usage);
-    if target == "profiles" {
-        return parse_profiles(args).ok_or_else(usage);
-    }
     let Some((verb, rest)) = args.split_first() else { return Err(usage()) };
     let mut params = Map::new();
     if target != "page" {
@@ -149,28 +146,14 @@ pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, Us
             "browser.page.tabs"
         }
         // These run the app's tab actions and wait for them unless `--no-wait`,
-        // as `action run` does. `--profile` (an id, a name, or `agent`) picks
-        // the new tab's browser profile; `set-profile P` moves the tab to P in
-        // place (same tab id; the page reloads in P's store).
-        ("new-tab" | "set-profile", _) | ("select" | "switch" | "close", []) => {
-            let (words, options) = words_and_options(rest, &["profile"], &["wait", "no-wait"])?;
-            match (verb.as_str(), words.as_slice()) {
-                ("new-tab", [] | [_])
-                | ("select" | "switch" | "close", [])
-                | ("set-profile", [_]) => {}
-                _ => return Err(usage()),
-            }
-            if verb == "set-profile" {
-                params.insert("profile".into(), json!(words[0]));
-            } else if let Some(profile) = options.value("profile").filter(|_| verb == "new-tab") {
-                params.insert("profile".into(), json!(profile));
-            } else if options.value("profile").is_some() {
-                return Err(usage());
-            }
-            if let ("new-tab", [url]) = (verb.as_str(), words.as_slice()) {
+        // as `action run` does.
+        ("new-tab", [] | [_]) | ("select" | "switch" | "close", []) => {
+            if let [url] = words.as_slice() {
                 params.insert("url".into(), json!(url));
             }
-            if options.flag("no-wait") {
+            let flags: Vec<String> =
+                rest.iter().filter(|arg| arg.starts_with("--")).cloned().collect();
+            if Options::parse(&flags, &[], &["wait", "no-wait"])?.flag("no-wait") {
                 params.insert("wait".into(), json!(false));
             } else {
                 timeout = WAITING_RUN_TIMEOUT;
@@ -178,7 +161,6 @@ pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, Us
             match verb.as_str() {
                 "new-tab" => "browser.page.new_tab",
                 "close" => "browser.page.close",
-                "set-profile" => "browser.page.set_profile",
                 _ => "browser.page.select_tab",
             }
         }
@@ -197,7 +179,6 @@ pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, Us
         "wait",
         "tabs",
         "new-tab",
-        "set-profile",
         "select",
         "switch",
         "close",
@@ -222,40 +203,6 @@ pub(super) fn parse_page(target: &str, args: &[String]) -> Result<AppCommand, Us
         timeout: Some(timeout),
         pick: None,
     })
-}
-
-/// `cmux browser profiles` (`browser.profiles.list`) and `cmux browser
-/// profiles create [NAME] [--color C] [--icon I]` (`browser.profiles.create`,
-/// which prints the new profile's id): the person's browser profiles, which
-/// `new-tab --profile` and `set-profile` take by id or name.
-fn parse_profiles(args: &[String]) -> Option<AppCommand> {
-    let call = |method, params| AppCommand::Call {
-        method,
-        params,
-        timeout: Some(READ_TIMEOUT),
-        pick: None,
-    };
-    match args.split_first() {
-        None => Some(call("browser.profiles.list", json!({}))),
-        Some((verb, rest)) if verb == "create" => {
-            let (words, options) = words_and_options(rest, &["color", "icon"], &[]).ok()?;
-            let mut params = Map::new();
-            match words.as_slice() {
-                [] => {}
-                [name] => {
-                    params.insert("name".into(), json!(name));
-                }
-                _ => return None,
-            }
-            for key in ["color", "icon"] {
-                if let Some(value) = options.value(key) {
-                    params.insert(key.into(), json!(value));
-                }
-            }
-            Some(call("browser.profiles.create", Value::Object(params)))
-        }
-        _ => None,
-    }
 }
 
 /// Positional words and `--flags` in any order; a valued flag takes the next word.
