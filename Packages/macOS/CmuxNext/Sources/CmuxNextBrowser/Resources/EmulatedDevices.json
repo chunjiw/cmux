@@ -2832,12 +2832,24 @@
     },
     "device-pixel-ratio": 3,
     "vertical-spanned": {
-     "width": 626,
-     "height": 890
+     "width": 890,
+     "height": 626,
+     "hinge": {
+      "width": 0,
+      "height": 626,
+      "x": 445,
+      "y": 0
+     }
     },
     "horizontal-spanned": {
-     "width": 890,
-     "height": 626
+     "width": 626,
+     "height": 890,
+     "hinge": {
+      "width": 626,
+      "height": 0,
+      "x": 0,
+      "y": 445
+     }
     }
    },
    "capabilities": [
@@ -2857,7 +2869,7 @@
     "https://www.ios-resolution.com/",
     "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
    ],
-   "notes": "Foldable. Modeled as the 5.4-inch outer (cover) display only: 1398x2034 px at 460 ppi (Apple specs), 466x678 pt @3x (ios-resolution.com). Inner 7.6-inch folding display is 1878x2670 px at 430 ppi (Apple specs) = 626x890 pt @3x (ios-resolution.com); it is one continuous viewport, no hinge/spanned data is sourced, so no foldable-screen modes. ios-resolution.com lists release 2026-10-23. Scale factor is from ios-resolution.com, not Apple. No modes: no sourced safe-area insets for this CSS size. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used. cmux: the inner screen is the unfolded (spanned) orientation, 626x890 CSS px at 3x (1878x2670 px, Apple specs; scale from ios-resolution.com); it is one continuous panel, so no hinge and no display feature.",
+   "notes": "Book-style foldable. vertical/horizontal: the 5.4-inch cover screen, 1398x2034 px at 460 ppi (Apple specs) = 466x678 CSS px @3x (scale from ios-resolution.com, not Apple). Spanned: the 7.6-inch inner screen, 1878x2670 px at 430 ppi (Apple specs) = 626x890 @3x; the open device is 164.6 mm wide x 117.8 mm high (Apple specs), so with the cover upright (vertical-spanned) it is 890x626. The inner screen is one continuous panel; the zero-width hinge at the centre follows Chrome's own Fold entries (Pixel 9 Pro Fold, Galaxy Z Fold). No sourced safe-area insets. ios-resolution.com lists release 2026-10-23. UA: the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6); the device ships with iOS 27 and no Safari 27 UA source was found.",
    "released": "2026-10",
    "foldable-screen": true,
    "modes": [
@@ -3028,7 +3040,7 @@
     "https://www.ios-resolution.com/",
     "https://webkit.org/blog/17333/webkit-features-in-safari-26-0/"
    ],
-   "notes": "8.3-inch: 2266x1488 px at 326 ppi (Apple specs), 744x1133 pt @2x (HIG). Chrome's 'iPad Mini' is the older 768x1024 model. Desktop-class Mac UA as in Chrome's 'iPad Pro 13'. UA is the Safari 26.0 string quoted by WebKit (iOS version frozen at 18_6). platformVersion mirrors the frozen UA OS version, like Chrome's entries mirror theirs. Devices that ship with iOS 27 would report a newer Version/ token; no WebKit source for the Safari 27 string was found, so the sourced 26.0 string is used. cmux: the UA follows Chrome's 'iPad Mini' convention (the mobile iPad UA; Safari on iPad mini asks for mobile sites by default), not the Mac UA of the larger iPads.",
+   "notes": "8.3-inch: 2266x1488 px at 326 ppi (Apple specs), 744x1133 pt @2x (HIG archive). UA: the mobile iPad UA, by Chrome's 'iPad Mini' convention (Safari on iPad mini asks for mobile sites by default), with the Safari 26.0 version token quoted by WebKit (iOS version frozen at 18_6).",
    "released": "2024-10",
    "origin": "cmux"
   },

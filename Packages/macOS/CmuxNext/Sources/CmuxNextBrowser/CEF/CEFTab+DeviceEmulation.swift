@@ -11,34 +11,38 @@ extension CEFTab: BrowserDeviceEmulating {
     /// Sends the tab's emulation (or its reset) to the page; the overrides
     /// live in the browser-side DevTools session, so they hold across
     /// navigations, also cross-process ones. Called again when the browser
-    /// is created (`attach`) and when the page area changes size (the fit scale).
+    /// is created (`attach`) and when the page area changes size (the fit
+    /// scale). One worker sends the newest state only: a live resize that
+    /// changes the scale on every frame does not queue a call set per frame.
     func applyDeviceEmulation() {
         guard let browserID, !isClosed else { return }
-        let emulation = deviceEmulation
-        guard emulation != nil || deviceEmulationApplied else { return }
-        let available = container.pageViewportFrame.size
-        let scale = emulation.map { $0.fitScale(in: available) } ?? 1
-        deviceEmulationScale = scale
-        deviceEmulationApplied = emulation != nil
+        guard deviceEmulation != nil || deviceEmulationApplied else { return }
+        deviceEmulationDirty = true
+        guard deviceEmulationTask == nil else { return }
         let runtime = runtime
-        let previous = deviceEmulationTask
-        deviceEmulationTask = Task {
-            await previous?.value
-            for (method, params) in await CEFDeviceEmulation.calls(emulation, scale: scale, browser: browserID, runtime: runtime) {
-                do {
-                    _ = try await runtime.devTools(browserID, method: method, params: params)
-                } catch {
-                    runtime.logger.error("device emulation \(method, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        deviceEmulationTask = Task { [weak self] in
+            while let self, self.deviceEmulationDirty, !self.isClosed {
+                self.deviceEmulationDirty = false
+                let emulation = self.deviceEmulation
+                let scale = emulation.map { $0.fitScale(in: self.container.pageViewportFrame.size) } ?? 1
+                self.deviceEmulationScale = scale
+                self.deviceEmulationApplied = emulation != nil
+                for (method, params) in await CEFDeviceEmulation.calls(emulation, scale: scale, browser: browserID, runtime: runtime) {
+                    do {
+                        _ = try await runtime.devTools(browserID, method: method, params: params)
+                    } catch {
+                        runtime.logger.error("device emulation \(method, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+                    }
                 }
             }
+            self?.deviceEmulationTask = nil
         }
     }
 
     /// The page area changed size: refit a device that no longer fits (or now fits better).
     func deviceEmulationViewDidResize() {
         guard let emulation = deviceEmulation else { return }
-        let available = container.pageViewportFrame.size
-        guard abs(emulation.fitScale(in: available) - (deviceEmulationScale ?? 0)) > 0.001 else { return }
+        guard emulation.fitScale(in: container.pageViewportFrame.size) != deviceEmulationScale else { return }
         applyDeviceEmulation()
     }
 }
@@ -77,6 +81,9 @@ enum CEFDeviceEmulation {
             "mobile": device.mobile, "scale": Double(scale),
             "screenWidth": Int(size.width), "screenHeight": Int(size.height),
             "positionX": 0, "positionY": 0,
+            // The view keeps the pane's size (DevTools sends it too): without
+            // it Chromium resizes the page's view to the device size.
+            "dontSetVisibleSize": true,
             "screenOrientation": ["type": portrait ? "portraitPrimary" : "landscapePrimary", "angle": portrait ? 0 : 90],
         ]
         if let hinge = emulation.hinge {
@@ -106,14 +113,20 @@ enum CEFDeviceEmulation {
         ]
     }
 
+    /// Chrome's reduced version ("154.0.0.0"): the default user agent from
+    /// `Browser.getVersion` (not the page's, which a page can change), else
+    /// the Chromium milestone the device list comes from. Never empty, so a
+    /// device's "%s" is always replaced.
     private static func version(browser: Int32, runtime: CEFRuntime) async -> String {
         if let chromeVersion { return chromeVersion }
-        let json = try? await runtime.devTools(browser, method: "Runtime.evaluate",
-                                               params: ["expression": "navigator.userAgent", "returnByValue": true])
-        guard let json, case .string(let agent)? = try? CEFDevToolsResult.evaluation(json),
-              let range = agent.range(of: #"Chrome/[0-9.]+"#, options: .regularExpression) else { return "" }
-        let version = String(agent[range].dropFirst("Chrome/".count))
-        chromeVersion = version
-        return version
+        if let json = try? await runtime.devTools(browser, method: "Browser.getVersion"),
+           let object = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+           let agent = object["userAgent"] as? String,
+           let range = agent.range(of: #"Chrome/[0-9.]+"#, options: .regularExpression) {
+            let version = String(agent[range].dropFirst("Chrome/".count))
+            chromeVersion = version
+            return version
+        }
+        return BrowserDevices.chromeVersionForWebKit
     }
 }

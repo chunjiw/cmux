@@ -18,8 +18,8 @@ public nonisolated struct BrowserDevice: Codable, Hashable, Sendable {
     public var order: Double?
     public var showByDefault: Bool?
     public var screen: Screen
-    /// "touch" and "mobile".
-    public var capabilities: [String]
+    /// "touch" and "mobile"; none when missing (Chrome's default).
+    public var capabilities: [String]?
     /// "%s" stands for the browser's Chrome version (Chrome patches it the same way).
     public var userAgent: String
     public var userAgentMetadata: UserAgentMetadata?
@@ -96,8 +96,8 @@ public nonisolated struct BrowserDevice: Codable, Hashable, Sendable {
         case foldableScreen = "foldable-screen"
     }
 
-    public var touch: Bool { capabilities.contains("touch") }
-    public var mobile: Bool { capabilities.contains("mobile") }
+    public var touch: Bool { capabilities?.contains("touch") == true }
+    public var mobile: Bool { capabilities?.contains("mobile") == true }
 
     /// Chrome's device categories, in Chrome's menu order (`deviceCategory`).
     public enum Category: String, CaseIterable, Sendable {
@@ -148,11 +148,12 @@ public nonisolated struct BrowserDevice: Codable, Hashable, Sendable {
         return result
     }
 
-    /// A device that can be emulated: sizes within Chrome's limits (1...9999).
+    /// A device that can be emulated: Chrome's limits (sizes 50...9999,
+    /// device pixel ratio up to 10 as DevTools' editor allows).
     var isValid: Bool {
         let sizes = [screen.vertical, screen.horizontal] + [screen.verticalSpanned, screen.horizontalSpanned].compactMap(\.self)
-        return !title.isEmpty && screen.devicePixelRatio > 0 && screen.devicePixelRatio <= 100
-            && sizes.allSatisfy { (1...9999).contains($0.width) && (1...9999).contains($0.height) }
+        return !title.isEmpty && screen.devicePixelRatio > 0 && screen.devicePixelRatio <= 10
+            && sizes.allSatisfy { (50...9999).contains($0.width) && (50...9999).contains($0.height) }
     }
 }
 
@@ -195,9 +196,11 @@ public nonisolated struct BrowserDeviceEmulation: Hashable, Sendable {
 
     /// The scale that fits the device in `available` points (at most 1),
     /// as Chrome's device mode fits a device bigger than its view.
+    /// Whole percent, rounded down, as Chrome's `calculateFitScale`.
     public func fitScale(in available: CGSize) -> CGFloat {
         guard available.width > 0, available.height > 0 else { return 1 }
-        return min(1, available.width / size.width, available.height / size.height)
+        let scale = min(1, available.width / size.width, available.height / size.height)
+        return max(0.01, (scale * 100).rounded(.down) / 100)
     }
 }
 
@@ -238,27 +241,35 @@ public nonisolated struct BrowserDevices: Sendable {
     }
 
     /// Reads the built-in list and `customFile` (a JSON array of Chrome
-    /// JSONV1 devices, or `{"devices": [...]}`). A missing file is no custom
-    /// devices; an unreadable one is reported in `customError`.
+    /// JSONV1 devices, or `{"devices": [...]}`). As Chrome, a device that does
+    /// not read or is out of range is left out alone; `customError` says
+    /// which. A missing file is no custom devices.
     public static func load(customFile: URL?) -> BrowserDevices {
         var custom: [BrowserDevice] = []
-        var problem: String?
+        var problems: [String] = []
         if let customFile, let data = try? Data(contentsOf: customFile) {
-            let decoder = JSONDecoder()
-            do {
-                let list: [BrowserDevice]
-                if let file = try? decoder.decode(DataFile.self, from: data) {
-                    list = file.devices
-                } else {
-                    list = try decoder.decode([BrowserDevice].self, from: data)
+            let top = try? JSONSerialization.jsonObject(with: data)
+            let entries = (top as? [Any]) ?? ((top as? [String: Any])?["devices"] as? [Any])
+            if let entries {
+                for (index, entry) in entries.enumerated() {
+                    do {
+                        let json = try JSONSerialization.data(withJSONObject: entry)
+                        var device = try JSONDecoder().decode(BrowserDevice.self, from: json)
+                        device.origin = nil
+                        guard device.isValid else {
+                            problems.append("#\(index + 1) \(device.title): sizes must be 50...9999, pixel ratio up to 10")
+                            continue
+                        }
+                        custom.append(device)
+                    } catch {
+                        problems.append("#\(index + 1): \(error)")
+                    }
                 }
-                custom = list.filter(\.isValid).map { var device = $0; device.origin = nil; return device }
-                if custom.count != list.count { problem = "\(list.count - custom.count) device(s) have sizes outside 1...9999 or no title" }
-            } catch {
-                problem = String(describing: error)
+            } else {
+                problems.append("not a JSON array of devices or {\"devices\": [...]}")
             }
         }
-        return BrowserDevices(builtIn: builtInDevices, custom: custom, customError: problem)
+        return BrowserDevices(builtIn: builtInDevices, custom: custom, customError: problems.isEmpty ? nil : problems.joined(separator: "\n"))
     }
 
     public var all: [BrowserDevice] { custom + builtIn }
@@ -281,7 +292,7 @@ public nonisolated struct BrowserDevices: Sendable {
     }
 
     private static func key(_ name: String) -> String {
-        name.lowercased().filter { $0.isLetter || $0.isNumber }
+        name.lowercased().filter { $0.isLetter || $0.isNumber || $0 == "+" }
     }
 }
 

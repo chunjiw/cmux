@@ -46,7 +46,7 @@ def main() -> int:
     parser.add_argument("source", help="a local copy of EmulatedDevices.ts")
     parser.add_argument("--ref", required=True, help="the devtools-frontend ref it came from, e.g. chromium/8037")
     parser.add_argument("--commit", required=True, help="the devtools-frontend commit of that ref")
-    parser.add_argument("--chromium", default="", help="the Chromium milestone of the ref, e.g. 154")
+    parser.add_argument("--chromium", required=True, help="the Chromium milestone of the ref, e.g. 154 (WebKit tabs name it in Android user agents)")
     parser.add_argument("--check", action="store_true", help="fail if the data file's Chrome part differs")
     args = parser.parse_args()
 

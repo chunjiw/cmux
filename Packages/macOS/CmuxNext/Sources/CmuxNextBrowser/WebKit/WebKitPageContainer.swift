@@ -10,8 +10,10 @@ import AppKit
 /// the only owner of the web view's frame while attached: when the chrome
 /// pinned the web view itself, every layout pass reset it to full size and
 /// WebKit shrank it back, so the inspector flickered on every frame. This
-/// container never sets the web view's frame after adding it; a container
-/// resize reaches it once through autoresizing, and WebKit re-places both.
+/// container never sets the web view's frame after adding it while the
+/// inspector is attached; a container resize reaches it once through
+/// autoresizing, and WebKit re-places both. Device emulation places the web
+/// view itself only while it is alone in the container.
 final class WebKitPageContainer: NSView {
     /// The web view; WebKit owns its frame (an attached inspector shrinks it).
     private(set) weak var page: NSView?
@@ -37,39 +39,34 @@ final class WebKitPageContainer: NSView {
     override func didAddSubview(_ subview: NSView) {
         super.didAddSubview(subview)
         onSubviewsChange?()
+        if emulatedSize != nil { needsLayout = true }
     }
 
     override func willRemoveSubview(_ subview: NSView) {
         super.willRemoveSubview(subview)
         onSubviewsChange?()
+        if emulatedSize != nil { needsLayout = true }
     }
 
     // MARK: Device emulation (WebKitTab+DeviceEmulation)
 
     /// The emulated device's CSS size, nil for none. The web view gets
-    /// exactly this size, centered at the top, and the container scales
-    /// its bounds when the device is bigger than the pane (Chrome's fit),
-    /// so the page's viewport stays the device's. While an attached Web
-    /// Inspector shares the container, WebKit owns the web view's frame
-    /// and the size is not applied (only the user agent and scale factor).
+    /// exactly this size, centered at the top, and the container scales its
+    /// bounds when the device is bigger than the pane (Chrome's fit), so the
+    /// page's viewport stays the device's. While an attached Web Inspector
+    /// shares the container, WebKit owns the web view's frame: the container
+    /// then keeps unscaled bounds and autoresizing and leaves the frame alone
+    /// (only the user agent and scale factor apply); when the inspector goes,
+    /// the device size returns.
     var emulatedSize: CGSize? {
         didSet {
             guard emulatedSize != oldValue else { return }
-            if emulatedSize == nil, let page {
-                setBoundsSize(frame.size)
-                setBoundsOrigin(.zero)
-                page.frame = bounds
-                page.autoresizingMask = [.width, .height]
-            }
             placeEmulatedPage()
         }
     }
 
-    /// The fit scale last applied (1 when the device fits).
-    private(set) var emulatedScale: CGFloat = 1
-
-    override func resizeSubviews(withOldSize oldSize: NSSize) {
-        guard emulatedSize != nil, subviews.count == 1 else { return super.resizeSubviews(withOldSize: oldSize) }
+    override func layout() {
+        super.layout()
         placeEmulatedPage()
     }
 
@@ -78,10 +75,27 @@ final class WebKitPageContainer: NSView {
         if emulatedSize != nil { placeEmulatedPage() }
     }
 
+    override func resizeSubviews(withOldSize oldSize: NSSize) {
+        guard emulatedSize != nil, subviews.count == 1 else { return super.resizeSubviews(withOldSize: oldSize) }
+        placeEmulatedPage()
+    }
+
+    private var isScaledForEmulation = false
+
     private func placeEmulatedPage() {
-        guard let size = emulatedSize, let page, subviews.count == 1, frame.width > 0, frame.height > 0 else { return }
+        guard let page else { return }
+        guard let size = emulatedSize, subviews.count == 1, frame.width > 0, frame.height > 0 else {
+            // No emulation, or the inspector owns the web view's frame.
+            guard isScaledForEmulation else { return }
+            isScaledForEmulation = false
+            setBoundsSize(frame.size)
+            setBoundsOrigin(.zero)
+            page.autoresizingMask = [.width, .height]
+            if subviews.count == 1 { page.frame = bounds }
+            return
+        }
+        isScaledForEmulation = true
         let scale = min(1, frame.width / size.width, frame.height / size.height)
-        emulatedScale = scale
         let scaled = CGSize(width: frame.width / scale, height: frame.height / scale)
         if bounds.size != scaled { setBoundsSize(scaled) }
         if bounds.origin != .zero { setBoundsOrigin(.zero) }

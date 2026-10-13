@@ -26,7 +26,15 @@ enum BrowserDeviceHandlers {
             let orientation = try invocation["orientation"]?.stringValue.map(Self.orientation)
             guard let name = invocation["device"]?.stringValue?.trimmingCharacters(in: .whitespaces), !name.isEmpty else {
                 if let orientation, let current = tab.deviceEmulation {
+                    guard current.device.orientations.contains(orientation) else {
+                        throw ActionFailure(message: DeviceStrings.noOrientation(device: current.device.title, orientation: orientation,
+                                                                                 available: current.device.orientations))
+                    }
                     return tab.setDeviceEmulation(BrowserDeviceEmulation(device: current.device, orientation: orientation))
+                }
+                // A script or agent gets the list; only a person gets the menu.
+                guard invocation.origin == .user else {
+                    throw ActionFailure(message: DeviceStrings.available(devices.all.map(\.title)))
                 }
                 let menu = Self.menu(devices: devices, current: tab.deviceEmulation, target: ActionTargetRef(kind: .tab, id: entry.tab.id.rawValue),
                                      registry: registry, services: context.services)
@@ -40,7 +48,12 @@ enum BrowserDeviceHandlers {
                 tab.setDeviceEmulation(current.rotated)
             default:
                 guard let device = devices.device(named: name) else {
-                    throw ActionFailure(message: DeviceStrings.unknownDevice(name), isNotFound: true)
+                    throw ActionFailure(message: DeviceStrings.unknownDevice(name) + "\n" + DeviceStrings.available(devices.all.map(\.title)),
+                                        isNotFound: true)
+                }
+                if let orientation, !device.orientations.contains(orientation) {
+                    throw ActionFailure(message: DeviceStrings.noOrientation(device: device.title, orientation: orientation,
+                                                                             available: device.orientations))
                 }
                 tab.setDeviceEmulation(BrowserDeviceEmulation(device: device, orientation: orientation))
             }
@@ -152,6 +165,29 @@ nonisolated enum DeviceStrings {
         String(localized: "browserDevices.unknownOrientation",
                defaultValue: "Unknown orientation “\(value)”. Use portrait, landscape, unfolded-portrait or unfolded-landscape.",
                table: "BrowserDevices", bundle: .module)
+    }
+
+    /// Every device title, for a script or agent.
+    static func available(_ titles: [String]) -> String {
+        let list = titles.joined(separator: ", ")
+        return String(localized: "browserDevices.available", defaultValue: "Devices: \(list)", table: "BrowserDevices", bundle: .module)
+    }
+
+    /// The orientation names the action takes, for a device's orientations.
+    static func argumentName(_ orientation: BrowserDeviceOrientation) -> String {
+        switch orientation {
+        case .vertical: "portrait"
+        case .horizontal: "landscape"
+        case .verticalSpanned: "unfolded-portrait"
+        case .horizontalSpanned: "unfolded-landscape"
+        }
+    }
+
+    static func noOrientation(device: String, orientation: BrowserDeviceOrientation, available: [BrowserDeviceOrientation]) -> String {
+        let name = argumentName(orientation)
+        let list = available.map(argumentName).joined(separator: ", ")
+        return String(localized: "browserDevices.noOrientation", defaultValue: "“\(device)” has no \(name) orientation. It has: \(list).",
+                      table: "BrowserDevices", bundle: .module)
     }
 
     static func details(width: Int, height: Int, ratio: Double) -> String {
