@@ -1,3 +1,4 @@
+public import CmuxNextSettings
 import Foundation
 
 /// `browser.profiles.list` and `browser.profiles.create {name?, color?, icon?}`

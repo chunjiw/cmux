@@ -4,6 +4,7 @@ import CmuxNextBrowser
 import CmuxNextControl
 import CmuxNextDaemon
 import CmuxNextDesign
+import CmuxNextSettings
 import CmuxNextWakeups
 
 /// Browser profile actions (plans/cmux-next/data-model.md 5 and 7): create,
@@ -98,11 +99,11 @@ enum BrowserProfileHandlers {
     }
 
     /// `browser.profiles.create` (BrowserProfileMethods) and the JSON of a profile it and `browser.profiles.list` report.
-    static func create(_ services: AppServices?, _ name: String?, _ color: String?, _ icon: String?) async throws -> JSONValue {
+    static func create(_ services: AppServices?, _ name: String?, _ color: String?, _ icon: String?) async throws -> CmuxNextSettings.JSONValue {
         guard let profiles = services?.browserProfiles else { throw ControlError(code: "unavailable", message: "the app is quitting") }
         return json(try await create(name: name, color: color, icon: icon, profiles))
     }
-    static func json(_ record: BrowserProfileRecord) -> JSONValue {
+    static func json(_ record: BrowserProfileRecord) -> CmuxNextSettings.JSONValue {
         .object(["id": .string(record.id), "name": .string(record.name), "color": .optional(record.color), "icon": .optional(record.icon),
                  "default": .bool(record.isDefault), "agent": .bool(record.id == AgentBrowserProfile.id)])
     }
