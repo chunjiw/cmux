@@ -42,9 +42,17 @@ import Foundation
     /// Reduces `input`. Returns whether it was handled (keys: false lets
     /// the field editor run its default). An input sent while a step runs
     /// is queued and reports false.
+    /// TEMP cx-d0d.87 diagnosis: every input with where it came from.
+    var trace: [String] = []
+    private func note(_ line: String) {
+        trace.append(line)
+        if trace.count > 60 { trace.removeFirst() }
+    }
+
     @discardableResult
     func send(_ input: OmnibarInput) -> Bool {
         guard !isRunning else {
+            note("QUEUED applying=\(isApplying) \(input)")
             queue.append(input)
             return false
         }
@@ -62,6 +70,7 @@ import Foundation
     @discardableResult
     private func step(_ input: OmnibarInput) -> Bool {
         let transition = OmnibarReducer.reduce(state, input, resolver: resolver())
+        note("STEP \(input) -> \(transition.state.phase) elided=\(transition.state.elided) text=\(transition.state.fieldText) sel=\(transition.state.edit.selection)")
         state = transition.state
         gate.begin(state.generation)
         isApplying = true

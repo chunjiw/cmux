@@ -250,7 +250,14 @@ try:
         snapshot("light-editing")
         # The test window is never key, so AppKit drops a raw click on the field editor (it takes no
         # first mouse); debug.omnibar_mouse presses over the text as AppKit does for a key window.
+        def dump(label):
+            report = omnibar()
+            print(label, {k: report.get(k) for k in ("phase", "elided", "text", "selection", "field_text", "field_selection", "field_editor_active")}, flush=True)
+            for line in (report.get("pointer") or {}).get("omnibar_trace") or []:
+                print("   trace", line, flush=True)
+        dump("TEMP after first click")
         rpc("debug.omnibar_mouse", {"window": WINDOW, "character": 3})
+        dump("TEMP after second click")
         print("after second click", {k: omnibar().get(k) for k in ("phase", "text", "selection")}, flush=True)
         second = wait_for(lambda: (omnibar().get("selection") or [0, 1])[1] == 0 and omnibar(), "second click places the caret", 5) or omnibar()
         check(second.get("has_focus") and (second.get("selection") or [0, 1])[1] == 0, f"second click places the caret: {second.get('selection')}")
