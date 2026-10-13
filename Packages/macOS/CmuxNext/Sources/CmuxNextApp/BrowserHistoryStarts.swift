@@ -62,6 +62,14 @@ final class BrowserHistoryStarts {
             outcomes[tabID] = "navigated"
             return false
         }
+        if let state = BrowserHistoryWriter.restoreState(saved, at: entry.url, engine: .webkit), page.restore(state),
+           page.webView.backForwardList.currentItem?.url.absoluteString == entry.url.absoluteString {
+            // WebKit keeps the scroll position it last recorded for the page, which can be older
+            // than the one measured at quit.
+            if let saved, let y = saved.entries[saved.index].scrollY { page.scrollOnLoad(to: y) }
+            outcomes[tabID] = "engine"
+            return true
+        }
         outcomes[tabID] = saved == nil ? "address" : saved?.engineState == nil ? "address-no-state" : "address-state-refused"
         page.load(entry.url)
         return false
