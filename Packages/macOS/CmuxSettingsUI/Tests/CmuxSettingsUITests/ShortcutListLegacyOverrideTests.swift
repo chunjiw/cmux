@@ -217,6 +217,50 @@ import Testing
         #expect(model.effective(for: .jumpToLastPrompt) == commandShiftB)
     }
 
+    /// Ctrl+Tab was hardwired to surface cycling. Binding it to any other
+    /// action takes it from Next Surface (Alternate); the Shift sibling keeps its key.
+    @Test func jsonBindingOnControlTabDisplacesNextSurfaceAlternateDefault() async throws {
+        let action = ShortcutAction.nextSidebarTab
+        let controlTab = try #require(ShortcutAction.nextSurfaceAlternate.defaultShortcut)
+        let controlShiftTab = try #require(ShortcutAction.prevSurfaceAlternate.defaultShortcut)
+        let (defaultsStore, suiteName) = try makeDefaultsStore(legacyBindings: [:])
+        defer { UserDefaults(suiteName: suiteName)?.removePersistentDomain(forName: suiteName) }
+        let jsonStore = makeJSONStore()
+        let catalog = SettingCatalog()
+        try await jsonStore.set([action.rawValue: controlTab], for: catalog.shortcuts.bindings)
+        let model = ShortcutListModel(
+            jsonStore: jsonStore,
+            userDefaultsStore: defaultsStore,
+            catalog: catalog,
+            errorLog: SettingsErrorLog()
+        )
+
+        model.startObserving()
+        await spin(until: { model.bindings[action.rawValue] == controlTab })
+
+        #expect(model.effective(for: action) == controlTab)
+        #expect(model.effective(for: .nextSurfaceAlternate) == nil)
+        #expect(model.effective(for: .prevSurfaceAlternate) == controlShiftTab)
+    }
+
+    @Test func surfaceAlternatesKeepControlTabWithoutAConflictingBinding() throws {
+        let (defaultsStore, suiteName) = try makeDefaultsStore(legacyBindings: [:])
+        defer { UserDefaults(suiteName: suiteName)?.removePersistentDomain(forName: suiteName) }
+        let model = ShortcutListModel(
+            jsonStore: makeJSONStore(),
+            userDefaultsStore: defaultsStore,
+            catalog: SettingCatalog(),
+            errorLog: SettingsErrorLog()
+        )
+
+        #expect(model.effective(for: .nextSurfaceAlternate) == StoredShortcut(
+            first: ShortcutStroke(key: "\t", control: true)
+        ))
+        #expect(model.effective(for: .prevSurfaceAlternate) == StoredShortcut(
+            first: ShortcutStroke(key: "\t", shift: true, control: true)
+        ))
+    }
+
     @Test func invalidLegacyShowHideChordDisplaysNoEffectiveHotkey() throws {
         let invalidChord = StoredShortcut(
             first: ShortcutStroke(key: "b", control: true),

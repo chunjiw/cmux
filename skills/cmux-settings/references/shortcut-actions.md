@@ -81,7 +81,9 @@ Values for `shortcuts.bindings.<action>`:
 - `shortcuts.bindings.moveSurfaceToPreviousPane`
 - `shortcuts.bindings.newSurface`
 - `shortcuts.bindings.nextSurface`
+- `shortcuts.bindings.nextSurfaceAlternate`
 - `shortcuts.bindings.prevSurface`
+- `shortcuts.bindings.prevSurfaceAlternate`
 - `shortcuts.bindings.resetWorkspaceTerminalFontSize`
 - `shortcuts.bindings.resize-pane-down`
 - `shortcuts.bindings.resize-pane-left`

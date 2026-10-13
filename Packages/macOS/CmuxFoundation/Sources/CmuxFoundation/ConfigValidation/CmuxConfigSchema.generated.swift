@@ -2534,6 +2534,8 @@ enum CmuxEmbeddedConfigSchema {
               "triggerFlash",
               "nextSurface",
               "prevSurface",
+              "nextSurfaceAlternate",
+              "prevSurfaceAlternate",
               "moveSurfaceLeft",
               "moveSurfaceRight",
               "moveSurfaceToPreviousPane",

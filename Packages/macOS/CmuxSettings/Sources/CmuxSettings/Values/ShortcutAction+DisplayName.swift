@@ -52,6 +52,10 @@ extension ShortcutAction {
         case .triggerFlash: return "Flash Focused Panel"
         case .nextSurface: return "Next Surface"
         case .prevSurface: return "Previous Surface"
+        case .nextSurfaceAlternate:
+            return String(localized: "shortcut.nextSurfaceAlternate.label", defaultValue: "Next Surface (Alternate)")
+        case .prevSurfaceAlternate:
+            return String(localized: "shortcut.prevSurfaceAlternate.label", defaultValue: "Previous Surface (Alternate)")
         case .moveSurfaceLeft: return String(localized: "shortcut.moveSurfaceLeft.label", defaultValue: "Reorder Surface Left")
         case .moveSurfaceRight: return String(localized: "shortcut.moveSurfaceRight.label", defaultValue: "Reorder Surface Right")
         case .moveSurfaceToPreviousPane:

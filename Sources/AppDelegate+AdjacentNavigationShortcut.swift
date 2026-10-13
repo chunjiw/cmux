@@ -6,12 +6,9 @@ extension AppDelegate {
     func handleAdjacentNavigationShortcut(event: NSEvent) -> Bool {
         let routedTabs = preferredMainWindowContextForShortcutRouting(event: event)?.tabManager
             ?? tabManager
-        if matchConfiguredShortcut(event: event, action: .nextSurface) {
-            stepTabOrWorkspace(forward: true, tabManager: routedTabs, event: event)
-            return true
-        }
-        if matchConfiguredShortcut(event: event, action: .prevSurface) {
-            stepTabOrWorkspace(forward: false, tabManager: routedTabs, event: event)
+        for action: KeyboardShortcutSettings.Action in [.nextSurface, .prevSurface]
+        where matchConfiguredShortcut(event: event, action: action) {
+            stepTabOrWorkspace(action, tabManager: routedTabs, event: event)
             return true
         }
         if matchConfiguredShortcut(event: event, action: .moveSurfaceLeft) {
@@ -64,11 +61,24 @@ extension AppDelegate {
 
     /// Previous/Next from a key (``TabManager/stepTabOrWorkspace(forward:dock:)``), with the Dock
     /// that owns keyboard focus, if any.
-    func stepTabOrWorkspace(forward: Bool, tabManager: TabManager?, event: NSEvent) {
+    func stepTabOrWorkspace(_ action: KeyboardShortcutSettings.Action, tabManager: TabManager?, event: NSEvent) {
         // Each action is named at its own gate call (tests/test_dock_shortcut_routing_guard.py).
-        let dock = forward
-            ? focusedDockStoreForShortcut(action: .nextSurface, preferredWindow: event.window)
-            : focusedDockStoreForShortcut(action: .prevSurface, preferredWindow: event.window)
+        let window = event.window
+        let dock: DockSplitStore?
+        switch action {
+        case .nextSurface:
+            dock = focusedDockStoreForShortcut(action: .nextSurface, preferredWindow: window)
+        case .prevSurface:
+            dock = focusedDockStoreForShortcut(action: .prevSurface, preferredWindow: window)
+        case .nextSurfaceAlternate:
+            dock = focusedDockStoreForShortcut(action: .nextSurfaceAlternate, preferredWindow: window)
+        case .prevSurfaceAlternate:
+            dock = focusedDockStoreForShortcut(action: .prevSurfaceAlternate, preferredWindow: window)
+        default:
+            assertionFailure("Not a surface step: \(action.rawValue)")
+            return
+        }
+        let forward = action == .nextSurface || action == .nextSurfaceAlternate
         tabManager?.stepTabOrWorkspace(forward: forward, dock: dock)
     }
 

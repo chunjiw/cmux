@@ -72,8 +72,6 @@ extension KeyboardShortcutSettings {
     }
 
     static let hardcodedSystemWideHotkeyConflicts: [StoredShortcut] = [
-        StoredShortcut(key: "\t", command: false, shift: false, option: false, control: true),
-        StoredShortcut(key: "\t", command: false, shift: true, option: false, control: true),
         StoredShortcut(key: "`", command: true, shift: false, option: false, control: false),
         StoredShortcut(key: "`", command: true, shift: true, option: false, control: false),
     ]

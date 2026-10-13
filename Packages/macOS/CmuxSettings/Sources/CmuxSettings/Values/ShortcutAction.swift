@@ -55,6 +55,10 @@ public enum ShortcutAction: String, CaseIterable, Sendable, Hashable, SettingCod
     // MARK: Navigation
     case nextSurface
     case prevSurface
+    /// A second key for Next Surface, Ctrl+Tab by default.
+    case nextSurfaceAlternate
+    /// A second key for Previous Surface, Ctrl+Shift+Tab by default.
+    case prevSurfaceAlternate
     /// Moves the selected surface one position left.
     case moveSurfaceLeft
     /// Moves the selected surface one position right.

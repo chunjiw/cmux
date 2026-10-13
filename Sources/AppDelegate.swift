@@ -16419,20 +16419,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             return true
         }
 
-        // Legacy Ctrl+Tab has no configurable action of its own. It
-        // intentionally reuses nextSurface/prevSurface for Dock ownership so
-        // both strokes follow the same routing classification.
-        if matchesLegacyNextSurfaceShortcut(event: event) {
+        // After the Ghostty goto_split fallbacks, so a Ghostty keybind on
+        // Ctrl+Tab keeps the priority it had over the old hardwired handler.
+        for action: KeyboardShortcutSettings.Action in [.nextSurfaceAlternate, .prevSurfaceAlternate]
+        where matchConfiguredShortcut(event: event, action: action) {
             stepTabOrWorkspace(
-                forward: true,
-                tabManager: preferredMainWindowContextForShortcutRouting(event: event)?.tabManager ?? tabManager,
-                event: event
-            )
-            return true
-        }
-        if matchesLegacyPreviousSurfaceShortcut(event: event) {
-            stepTabOrWorkspace(
-                forward: false,
+                action,
                 tabManager: preferredMainWindowContextForShortcutRouting(event: event)?.tabManager ?? tabManager,
                 event: event
             )
@@ -18400,10 +18392,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func eventCouldMatchNumberedShortcutDigit(_ event: NSEvent) -> Bool {
         shortcutMatcher.eventCouldMatchNumberedDigit(event)
-    }
-
-    func matchTabShortcut(event: NSEvent, shortcut: StoredShortcut) -> Bool {
-        shortcutMatcher.matchesTab(event: event, shortcut: shortcut)
     }
 
     func matchDirectionalShortcut(

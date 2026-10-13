@@ -38,6 +38,7 @@ extension KeyboardShortcutSettings.Action {
         switch self {
         case .triggerFlash,
              .nextSurface, .prevSurface,
+             .nextSurfaceAlternate, .prevSurfaceAlternate,
              .moveSurfaceLeft, .moveSurfaceRight,
              .moveSurfaceToPreviousPane, .moveSurfaceToNextPane,
              .moveSurfaceToPaneLeft, .moveSurfaceToPaneRight,
@@ -362,20 +363,6 @@ extension AppDelegate {
         }
         return activeTabManagerForCommands(preferredWindow: targetWindow)?
             .toggleFocusedTerminalCopyMode() ?? false
-    }
-
-    func matchesLegacyNextSurfaceShortcut(event: NSEvent) -> Bool {
-        matchTabShortcut(
-            event: event,
-            shortcut: StoredShortcut(key: "\t", command: false, shift: false, option: false, control: true)
-        )
-    }
-
-    func matchesLegacyPreviousSurfaceShortcut(event: NSEvent) -> Bool {
-        matchTabShortcut(
-            event: event,
-            shortcut: StoredShortcut(key: "\t", command: false, shift: true, option: false, control: true)
-        )
     }
 
     func ghosttyGotoSplitShortcut(for direction: NavigationDirection) -> StoredShortcut? {

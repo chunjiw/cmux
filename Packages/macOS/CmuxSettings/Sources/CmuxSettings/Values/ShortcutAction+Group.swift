@@ -13,7 +13,8 @@ extension ShortcutAction {
              .switchRightSidebarToSessions, .switchRightSidebarToFeed,
              .switchRightSidebarToDock, .switchRightSidebarToMachines, .triggerFlash, .reopenClosedWorkspace:
             return .workspace
-        case .nextSurface, .prevSurface, .moveSurfaceLeft, .moveSurfaceRight,
+        case .nextSurface, .prevSurface, .nextSurfaceAlternate, .prevSurfaceAlternate,
+             .moveSurfaceLeft, .moveSurfaceRight,
              .moveSurfaceToPreviousPane, .moveSurfaceToNextPane,
              .moveSurfaceToPaneLeft, .moveSurfaceToPaneRight,
              .moveSurfaceToPaneUp, .moveSurfaceToPaneDown,

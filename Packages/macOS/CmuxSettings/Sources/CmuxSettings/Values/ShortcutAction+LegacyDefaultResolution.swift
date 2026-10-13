@@ -85,9 +85,16 @@ extension ShortcutAction {
     /// New defaults on a stroke that people may already have bound by hand.
     /// While the action sits on its implicit default, any explicit binding of
     /// another action on that stroke keeps it. Cmd+Shift+B was Open Browser's
-    /// default before it moved to Cmd+Shift+L.
+    /// default before it moved to Cmd+Shift+L. Ctrl+Tab was hardwired before
+    /// the alternate surface actions owned it, so binding it to anything else
+    /// is how people take it over.
     private var builtInDefaultYieldsToExplicitBindings: Bool {
-        self == .jumpToLastPrompt
+        switch self {
+        case .jumpToLastPrompt, .nextSurfaceAlternate, .prevSurfaceAlternate:
+            return true
+        default:
+            return false
+        }
     }
 
     private var legacyActionDisplacingBuiltInDefault: ShortcutAction? {

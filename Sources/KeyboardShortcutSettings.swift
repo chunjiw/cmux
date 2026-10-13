@@ -40,33 +40,6 @@ enum KeyboardShortcutSettings {
         Action.allCases.filter(\.isPublicShortcutAction)
     }
 
-    static var settingsVisibleActions: [Action] {
-        orderedSettingsVisibleActions(
-            from: publicShortcutActions.filter { $0 != .showHideAllWindows }
-        )
-    }
-
-    private static func orderedSettingsVisibleActions(from actions: [Action]) -> [Action] {
-        let colocatedSidebarActions = [
-            .focusRightSidebar,
-            .toggleRightSidebar,
-            .findInDirectory,
-            .fileExplorerOpenSelection,
-            .fileExplorerOpenSelectionFinderAlias,
-        ].filter(actions.contains)
-        let actionSet = Set(colocatedSidebarActions)
-        let baseActions = actions.filter { !actionSet.contains($0) }
-
-        guard let anchorIndex = baseActions.firstIndex(of: .markOldestUnreadAndJumpNext)
-            ?? baseActions.firstIndex(of: .jumpToUnread) else {
-            return colocatedSidebarActions + baseActions
-        }
-
-        var orderedActions = baseActions
-        orderedActions.insert(contentsOf: colocatedSidebarActions, at: anchorIndex + 1)
-        return orderedActions
-    }
-
     enum ShortcutRecordingRejection: Equatable {
         case bareKeyNotAllowed
         case conflictsWithAction(Action)
@@ -123,6 +96,7 @@ enum KeyboardShortcutSettings {
         // Navigation
         case nextSurface
         case prevSurface
+        case nextSurfaceAlternate, prevSurfaceAlternate
         case moveSurfaceLeft, moveSurfaceRight
         case moveSurfaceToPreviousPane, moveSurfaceToNextPane
         case moveSurfaceToPaneLeft, moveSurfaceToPaneRight
@@ -282,6 +256,8 @@ enum KeyboardShortcutSettings {
             case .triggerFlash: return String(localized: "shortcut.flashFocusedPanel.label", defaultValue: "Flash Focused Panel")
             case .nextSurface: return String(localized: "shortcut.nextSurface.label", defaultValue: "Next Surface")
             case .prevSurface: return String(localized: "shortcut.previousSurface.label", defaultValue: "Previous Surface")
+            case .nextSurfaceAlternate: return String(localized: "shortcut.nextSurfaceAlternate.label", defaultValue: "Next Surface (Alternate)")
+            case .prevSurfaceAlternate: return String(localized: "shortcut.prevSurfaceAlternate.label", defaultValue: "Previous Surface (Alternate)")
             case .moveSurfaceLeft: return String(localized: "shortcut.moveSurfaceLeft.label", defaultValue: "Reorder Surface Left")
             case .moveSurfaceRight: return String(localized: "shortcut.moveSurfaceRight.label", defaultValue: "Reorder Surface Right")
             case .moveSurfaceToPreviousPane: return SurfacePaneMovement.previous.title
@@ -618,6 +594,8 @@ enum KeyboardShortcutSettings {
                 return StoredShortcut(key: "]", command: true, shift: true, option: false, control: false)
             case .prevSurface:
                 return StoredShortcut(key: "[", command: true, shift: true, option: false, control: false)
+            case .nextSurfaceAlternate: return StoredShortcut(key: "\t", command: false, shift: false, option: false, control: true)
+            case .prevSurfaceAlternate: return StoredShortcut(key: "\t", command: false, shift: true, option: false, control: true)
             case .moveSurfaceLeft: return StoredShortcut(key: "[", command: true, shift: true, option: true, control: false)
             case .moveSurfaceRight: return StoredShortcut(key: "]", command: true, shift: true, option: true, control: false)
             case .moveSurfaceToPreviousPane:
