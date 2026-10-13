@@ -30,6 +30,63 @@ struct ClaudeBackgroundWorkNotifyTests {
         #expect(statusLine(result.snapshot, value: "Waiting") == nil)
     }
 
+    @Test func preToolUseAfterStopDoesNotReopenRunningState() throws {
+        let session = "helper-after-stop"
+        let harness = ClaudeHookSurfaceResolutionSwiftTests()
+        let context = try harness.makeClaudeHookContext(name: "helper-after-stop")
+        defer { context.cleanup() }
+        let handled = harness.startClaudeSurfaceResolutionServer(
+            context: context,
+            surfaces: [(context.surfaceId, "surface:1", true)],
+            ttyName: "ttys-helper-after-stop",
+            ttySurfaceId: context.surfaceId
+        )
+        let environment = harness.claudeHookEnvironment(
+            context: context,
+            surfaceId: context.surfaceId,
+            ttyName: "ttys-helper-after-stop",
+            storeURL: context.root.appendingPathComponent("claude-hook-sessions.json")
+        )
+
+        let promptResult = harness.runProcess(
+            executablePath: context.cliPath,
+            arguments: ["hooks", "claude", "prompt-submit"],
+            environment: environment,
+            standardInput: #"{"session_id":"\#(session)","cwd":"/tmp/x","hook_event_name":"UserPromptSubmit","prompt":"finish this"}"#,
+            timeout: ClaudeHookLiveDeliveryHarness.processWallBound
+        )
+        #expect(handled.wait(timeout: .now() + 5) == .success)
+        harness.assertSuccessfulHook(promptResult)
+
+        let stopResult = harness.runProcess(
+            executablePath: context.cliPath,
+            arguments: ["hooks", "claude", "stop"],
+            environment: environment,
+            standardInput: #"{"session_id":"\#(session)","cwd":"/tmp/x","hook_event_name":"Stop","last_assistant_message":"done","background_tasks":[],"session_crons":[]}"#,
+            timeout: ClaudeHookLiveDeliveryHarness.processWallBound
+        )
+        #expect(handled.wait(timeout: .now() + 5) == .success)
+        harness.assertSuccessfulHook(stopResult)
+
+        // Claude may run a background helper after the parent Stop. Its
+        // PreToolUse must not reopen the completed parent turn as Running.
+        let helperResult = harness.runProcess(
+            executablePath: context.cliPath,
+            arguments: ["hooks", "claude", "pre-tool-use"],
+            environment: environment,
+            standardInput: #"{"session_id":"\#(session)","cwd":"/tmp/x","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}"#,
+            timeout: ClaudeHookLiveDeliveryHarness.processWallBound
+        )
+        #expect(handled.wait(timeout: .now() + 5) == .success)
+        harness.assertSuccessfulHook(helperResult)
+
+        let snapshot = context.state.snapshot()
+        #expect(lastLine(snapshot, prefix: "set_status claude_code ")?.hasPrefix("set_status claude_code Idle ") == true,
+                "A helper PreToolUse after Stop must preserve Idle; saw \(snapshot)")
+        #expect(snapshot.filter { $0.hasPrefix("set_status claude_code Running ") }.isEmpty,
+                "A helper PreToolUse after Stop must not publish Running; saw \(snapshot)")
+    }
+
     private func statusLine(_ snapshot: [String], value: String) -> String? {
         snapshot.first { $0.hasPrefix("set_status claude_code \(value) ") }
     }
