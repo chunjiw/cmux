@@ -20,7 +20,7 @@
 
 mod hidden_doc;
 mod journal_feed;
-mod ledger;
+pub(crate) mod ledger;
 mod merged;
 mod pages;
 mod sources;

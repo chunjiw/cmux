@@ -792,6 +792,16 @@ fn state_resource_cases<'a>(
             "browser.devices.add_custom",
         ),
         (vec!["browser", "devices", "remove", "--title", "Kiosk"], "browser.devices.remove_custom"),
+        (vec!["browser", "profile", "list"], "browser.profile.list"),
+        (vec!["browser", "profile", "create", "--name", "Work"], "browser.profile.create"),
+        (
+            vec!["browser", "tab", "open", "--url", "https://example.com", "--profile", "Work"],
+            "browser.tab.open",
+        ),
+        (
+            vec!["browser", "tab", tab, "set-profile", "--profile", "Work"],
+            "browser.tab.set_profile",
+        ),
         (vec!["tab", "group", "list", "--pane", pane], "tab_group.list"),
         (vec!["tab", "group", "g", "show"], "tab_group.get"),
         (

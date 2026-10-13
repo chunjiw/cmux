@@ -20,9 +20,14 @@ declare namespace Cmux {
   type BrowserDeviceAddResult = { device: Cmux.JsonValue }
   type BrowserDeviceList = { chrome: Cmux.JsonValue; devices: Array<Cmux.JsonValue> }
   type BrowserDeviceRemoveResult = { removed: boolean }
+  type BrowserProfileCreateResult = { profile: Cmux.BrowserProfileSnapshot }
+  type BrowserProfileList = { profiles: Array<Cmux.BrowserProfileSnapshot> }
+  type BrowserProfileSnapshot = { id: string; name: string; color: string | null; icon: string | null; index: number }
   type BrowserSnapshot = { id: string /* browser_… */; tab_id: string /* tab_… */; url: string; title: string; loading: boolean; source: Cmux.BrowserSource; status: Cmux.BrowserStatus; error: string | null; frames_stalled: boolean; size: Cmux.Size; extra?: Record<string, Cmux.JsonValue> }
   type BrowserSource = "external" | "launched"
   type BrowserStatus = "starting" | "live" | "failed"
+  type BrowserTabOpenResult = { tab_id: string /* tab_… */ | null; profile_id: string }
+  type BrowserTabProfileResult = { tab_id: string /* tab_… */; profile_id: string; changed: boolean }
   type BrowserViewerResizeResult = { accepted: boolean; size: Cmux.PixelSize; outcome: Cmux.ViewAttachmentOutcome }
   type Budget = { wall_clock_seconds?: number; vm_minutes?: number; model_spend_usd?: unknown; tool_calls?: number }
   type CellPixelsResult = { width_px: number; height_px: number; resized_terminals: Array<string /* terminal_… */>; failures: Record<string, string> }
@@ -507,6 +512,12 @@ interface CmuxGlobal {
     list: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; tab?: string }, Array<Cmux.BrowserSnapshot>>
     /** `browser.navigate` (mutation, scope `browser:write`) */
     navigate: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; tab?: string; browser: string; url: string; expected_revision?: string }, Cmux.MutationResult<Cmux.BrowserSnapshot>>
+    profile: {
+      /** `browser.profile.create` (mutation, scope `browser:write`) */
+      create: CmuxOp<{ machine?: string; session?: string; name: string; color?: string; icon?: string }, Cmux.MutationResult<Cmux.BrowserProfileCreateResult>>
+      /** `browser.profile.list` (read, scope `browser:read`) */
+      list: CmuxOp<{ machine?: string; session?: string }, Cmux.BrowserProfileList>
+    }
     /** `browser.reload` (mutation, scope `browser:write`) */
     reload: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; tab?: string; browser: string; expected_revision?: string }, Cmux.MutationResult<Cmux.BrowserSnapshot>>
     tab: {
@@ -515,6 +526,10 @@ interface CmuxGlobal {
         /** `browser.tab.emulate.clear` (mutation, scope `browser:write`) */
         clear: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; tab: string; expected_revision?: string }, Cmux.MutationResult<Cmux.TabSnapshot>>
       }
+      /** `browser.tab.open` (mutation, scope `browser:write`) */
+      open: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; url: string; profile?: string; engine?: "webkit" | "cef" }, Cmux.MutationResult<Cmux.BrowserTabOpenResult>>
+      /** `browser.tab.set_profile` (mutation, scope `browser:write`) */
+      set_profile: CmuxOp<{ machine?: string; session?: string; workspace?: string; screen?: string; pane?: string; tab: string; profile: string }, Cmux.MutationResult<Cmux.BrowserTabProfileResult>>
     }
   }
   caffeinate: {

@@ -446,6 +446,14 @@ pub enum ResourceOperation {
     BrowserTabEmulate,
     #[serde(rename = "browser.tab.emulate.clear")]
     BrowserTabEmulateClear,
+    #[serde(rename = "browser.profile.list")]
+    BrowserProfileList,
+    #[serde(rename = "browser.profile.create")]
+    BrowserProfileCreate,
+    #[serde(rename = "browser.tab.open")]
+    BrowserTabOpen,
+    #[serde(rename = "browser.tab.set_profile")]
+    BrowserTabSetProfile,
     #[serde(rename = "palette_usage.get")]
     PaletteUsageGet,
     #[serde(rename = "palette_usage.record")]

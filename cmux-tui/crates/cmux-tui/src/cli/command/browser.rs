@@ -37,6 +37,29 @@ pub(super) fn parse_browser(
                 map_with("title", Value::String(title)),
             )
         }
+        // browser-profile-agent-v1: agents list and create browser profiles,
+        // open a tab in one and move a tab to another (no delete: a person's).
+        ["profile", "list"] => {
+            request(ResourceOperation::BrowserProfileList, selectors, flags, Map::new())
+        }
+        ["profile", "create"] => {
+            let mut params = map_with("name", Value::String(flags.required("name")?));
+            insert_optional_string(&mut params, flags, "color", "color");
+            insert_optional_string(&mut params, flags, "icon", "icon");
+            request(ResourceOperation::BrowserProfileCreate, selectors, flags, params)
+        }
+        ["tab", "open"] => {
+            let mut params = map_with("url", Value::String(flags.required("url")?));
+            insert_optional_string(&mut params, flags, "profile", "profile");
+            insert_optional_string(&mut params, flags, "engine", "engine");
+            add_optional_parent_selectors(selectors, flags, &["workspace", "screen", "pane"])?;
+            request(ResourceOperation::BrowserTabOpen, selectors, flags, params)
+        }
+        ["tab", selector, "set-profile"] => {
+            selectors.insert("tab", "tab", selector)?;
+            let params = map_with("profile", Value::String(flags.required("profile")?));
+            request(ResourceOperation::BrowserTabSetProfile, selectors, flags, params)
+        }
         ["open"] | ["open", _] => parse_browser_open(words, selectors, flags),
         [selector, "show"] => {
             selectors.insert("browser", "browser", selector)?;

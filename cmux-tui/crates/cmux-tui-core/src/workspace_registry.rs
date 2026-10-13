@@ -98,7 +98,9 @@ pub(crate) use journal_extensions::{
 };
 pub(crate) use mutation_ledger::insert_resource_mutation;
 pub use mutation_ledger::{Actor, WorkspaceMutation};
-pub use personal_browser_profiles::{BrowserProfileInput, BrowserProfileUpdate};
+pub use personal_browser_profiles::{
+    BrowserProfileInput, BrowserProfileUpdate, PersonalBrowserProfile,
+};
 pub use personal_mutations::{PersonalWorkspaceUpdate, ProfileInput, ProfileUpdate};
 pub use personal_store::{DEFAULT_PROFILE_ID, PersonalSnapshot};
 pub use presentation_store::{

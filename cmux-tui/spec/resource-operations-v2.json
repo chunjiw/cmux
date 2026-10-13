@@ -35,7 +35,8 @@
     "conversation",
     "setting",
     "keybinding",
-    "browser_device"
+    "browser_device",
+    "browser_profile"
   ],
   "types": {
     "BrowserDeviceList": {
@@ -87,6 +88,141 @@
             "name": "boolean"
           },
           "description": "False when no custom device had the title."
+        }
+      },
+      "extra": false
+    },
+    "BrowserProfileSnapshot": {
+      "kind": "object",
+      "fields": {
+        "id": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "`default` or a lowercase UUID."
+        },
+        "name": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "color": {
+          "required": true,
+          "type": {
+            "kind": "nullable",
+            "value": {
+              "kind": "primitive",
+              "name": "string"
+            }
+          },
+          "description": "The profile color, or null."
+        },
+        "icon": {
+          "required": true,
+          "type": {
+            "kind": "nullable",
+            "value": {
+              "kind": "primitive",
+              "name": "string"
+            }
+          },
+          "description": "The icon value, or null."
+        },
+        "index": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "uint32"
+          },
+          "description": "The profile's place in the list."
+        }
+      },
+      "extra": false
+    },
+    "BrowserProfileList": {
+      "kind": "object",
+      "fields": {
+        "profiles": {
+          "required": true,
+          "type": {
+            "kind": "array",
+            "items": {
+              "kind": "ref",
+              "name": "BrowserProfileSnapshot"
+            }
+          }
+        }
+      },
+      "extra": false
+    },
+    "BrowserProfileCreateResult": {
+      "kind": "object",
+      "fields": {
+        "profile": {
+          "required": true,
+          "type": {
+            "kind": "ref",
+            "name": "BrowserProfileSnapshot"
+          },
+          "description": "The new profile."
+        }
+      },
+      "extra": false
+    },
+    "BrowserTabOpenResult": {
+      "kind": "object",
+      "fields": {
+        "tab_id": {
+          "required": true,
+          "type": {
+            "kind": "nullable",
+            "value": {
+              "kind": "resource_id",
+              "resource": "tab"
+            }
+          },
+          "description": "The new tab."
+        },
+        "profile_id": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "The profile the tab's page uses."
+        }
+      },
+      "extra": false
+    },
+    "BrowserTabProfileResult": {
+      "kind": "object",
+      "fields": {
+        "tab_id": {
+          "required": true,
+          "type": {
+            "kind": "resource_id",
+            "resource": "tab"
+          }
+        },
+        "profile_id": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "The profile the tab's record names now."
+        },
+        "changed": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean"
+          },
+          "description": "False when the tab was in that profile already."
         }
       },
       "extra": false
@@ -2041,7 +2177,7 @@
               "name": "JsonValue"
             }
           },
-          "description": "Explicit forward-compatible data. Optional name_source (user or auto) and name_revision (canonical unsigned decimal string) carry durable name authority. Their absence means automatic naming is unavailable. pinned, tab_group_id, zoom (browser page zoom or terminal font scale), and a browser tab's back and forward URL lists (at most 20 each) are present when set. Unknown sibling fields remain forbidden."
+          "description": "Explicit forward-compatible data. Optional name_source (user or auto) and name_revision (canonical unsigned decimal string) carry durable name authority. Their absence means automatic naming is unavailable. pinned, tab_group_id, zoom (browser page zoom or terminal font scale), and a browser tab's back and forward URL lists (at most 20 each) are present when set. A frontend-rendered browser tab carries browser_profile_id: the browser profile whose store its page uses (default when none was set; browser-profile-agent-v1). Unknown sibling fields remain forbidden."
         }
       },
       "extra": false
@@ -13472,6 +13608,106 @@
         "validation.invalid"
       ]
     },
+    "browser.profile.create": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "browser_profile",
+      "ancestors": [
+        "machine",
+        "session"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "name": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 128
+            },
+            "description": "The profile's name (names need not be unique; pass the id to tell two apart)."
+          },
+          "color": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1
+            },
+            "description": "A profile color name (the browser-profiles-v1 colors)."
+          },
+          "icon": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1
+            },
+            "description": "An icon value (see put-blob, Icon values)."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Creates a new, empty profile at the end of the list; a retry with the same idempotency key answers the first profile and creates none."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "BrowserProfileCreateResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "origin.forbidden",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "browser.profile.list": {
+      "class": "read",
+      "idempotency": "forbidden",
+      "target": "browser_profile",
+      "ancestors": [
+        "machine",
+        "session"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {},
+        "extra": false,
+        "constraints": [
+          "Answers {profiles}: every browser profile of the machine's personal state in its order, default first. A profile is one store: cookies, local storage, IndexedDB, cache, history and passwords. Agents may list, create and use profiles; only a person deletes one (delete-browser-profile, origin user)."
+        ]
+      },
+      "result": {
+        "kind": "ref",
+        "name": "BrowserProfileList"
+      },
+      "errors": [
+        "operation.failed",
+        "origin.forbidden",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
     "browser.reload": {
       "class": "mutation",
       "idempotency": "required",
@@ -13674,6 +13910,143 @@
         "origin.forbidden",
         "resource.not_found",
         "revision.conflict",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "selector.wrong_parent",
+        "validation.invalid"
+      ]
+    },
+    "browser.tab.open": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "tab",
+      "ancestors": [
+        "machine",
+        "session",
+        "workspace",
+        "screen",
+        "pane"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required",
+          "workspace": "optional",
+          "screen": "optional",
+          "pane": "optional"
+        },
+        "fields": {
+          "url": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1
+            },
+            "description": "The page to open."
+          },
+          "profile": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 128
+            },
+            "description": "A browser profile: its id (`default` or a lowercase UUID), else its exact name, else the one name that matches ignoring case. Absent: default."
+          },
+          "engine": {
+            "required": false,
+            "type": {
+              "kind": "enum",
+              "values": [
+                "webkit",
+                "cef"
+              ]
+            },
+            "description": "The engine that renders the tab. Absent: webkit."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "A frontend-rendered browser tab (the app that shows the pane renders it) whose page uses the profile's store. Without a pane or workspace selector the tab opens in the session's active pane. The tab's extra.browser_profile_id names its profile."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "BrowserTabOpenResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "origin.forbidden",
+        "resource.not_found",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "selector.wrong_parent",
+        "validation.invalid"
+      ]
+    },
+    "browser.tab.set_profile": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "tab",
+      "ancestors": [
+        "machine",
+        "session",
+        "workspace",
+        "screen",
+        "pane"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required",
+          "workspace": "optional",
+          "screen": "optional",
+          "pane": "optional",
+          "tab": "required"
+        },
+        "fields": {
+          "profile": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 128
+            },
+            "description": "A browser profile: its id (`default` or a lowercase UUID), else its exact name, else the one name that matches ignoring case."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "A frontend-rendered browser tab only. The tab keeps its id and place in the pane; its record names the profile (frontend-browser-tab-profile-v1), and the app that shows it makes the page in that profile's store and loads the same URL, so cookies, local storage and IndexedDB switch at once. Back/forward history and session storage stay with the old store: the page in the new profile starts a new history. The same profile again changes nothing (changed false)."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "BrowserTabProfileResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "origin.forbidden",
+        "resource.not_found",
         "selector.ambiguous",
         "selector.invalid",
         "selector.not_found",

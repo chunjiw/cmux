@@ -142,8 +142,8 @@ command prints its path; `--out -` writes the PNG to stdout.
 
 The per-tab commands have no saved state, console
 capture, dialogs, downloads, recording or proxies. The REPL has all of them (see "Pick the surface"). Network
-routing, geolocation, offline and viewport emulation, `identify` and profiles
-have no agent surface yet.
+routing, geolocation, offline and viewport emulation and `identify` have no
+agent surface yet.
 
 Some have UI actions that act on the focused browser and return no data:
 `cmux browser screenshot-page`, `browser screenshot-section`,
@@ -154,6 +154,27 @@ Some have UI actions that act on the focused browser and return no data:
 Page zoom of an app browser tab is `cmux tab <tab_…> zoom in|out|reset`, which
 runs the app's zoom action on the tab's pane (the tab must be the one its pane
 shows); the CLI never writes the browser tab record.
+
+## Browser profiles
+
+A browser profile has its own cookies, local storage, IndexedDB, cache and
+permissions. Make a new, empty one for an agent's sign-ins, open tabs in it,
+or move a tab into it (daemon verbs, also MCP tools `browser_profile_list`,
+`browser_profile_create`, `browser_tab_open`, `browser_tab_set_profile`):
+
+```bash
+cmux --json browser profile list                         # id, name, color, icon, index
+cmux --json browser profile create --name "Research"     # returns the new id
+cmux --json browser tab open --url https://example.com --profile Research [--engine webkit|cef]
+cmux --json browser tab "$TAB" set-profile --profile Research
+cmux --json tab "$TAB" show                              # extra.browser_profile_id
+```
+
+A profile is named by id or by name. `set-profile` keeps the tab (same id and
+position): the daemon moves the tab record and the app reloads the page at the
+same URL in the target profile's store. The back/forward list and session
+storage stay with the old profile. Agents cannot delete a profile. Do not move
+a tab into the person's own profile unless they asked for it.
 
 ## Troubleshooting
 
