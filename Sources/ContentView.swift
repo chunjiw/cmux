@@ -1710,9 +1710,10 @@ struct ContentView: View {
             onSendFeedback: presentFeedbackComposer,
             onToggleSidebar: { sidebarState.toggle() },
             onNewTab: {
-                AppDelegate.shared?.performNewLocalWorkspaceAction(
+                AppDelegate.shared?.performNewWorkspaceAction(
                     tabManager: tabManager,
-                    debugSource: "titlebar.hiddenNewWorkspace"
+                    debugSource: "titlebar.hiddenNewWorkspace",
+                    skipConfiguredAction: true
                 )
             },
             observedWindowReference: observedWindowReference,
@@ -2062,9 +2063,10 @@ struct ContentView: View {
                 )
             },
             onNewTab: {
-                AppDelegate.shared?.performNewLocalWorkspaceAction(
+                AppDelegate.shared?.performNewWorkspaceAction(
                     tabManager: tabManager,
-                    debugSource: "titlebar.fullscreenNewWorkspace"
+                    debugSource: "titlebar.fullscreenNewWorkspace",
+                    skipConfiguredAction: true
                 )
             },
             onFocusHistoryBack: {
@@ -5852,11 +5854,28 @@ struct ContentView: View {
     }
 
     private func openCommandPaletteCloudWorkspace(_ target: CommandPaletteCloudWorkspaceTarget) {
+        // Already open in any window: go there instead of opening a second copy here (#19967).
+        if let shownIn = SurfaceCatalog.shared.localWorkspaceShowing(
+            remoteWorkspaceID: target.workspace.id,
+            placements: target.group.placements
+        ) {
+            switch AppDelegate.shared?.selectCloudTreeLocalWorkspace(shownIn, from: tabManager) {
+            case .selected:
+                return
+            case .openInUnfocusableWindow:
+                NSSound.beep()
+                return
+            case .notOpen, nil:
+                break
+            }
+        }
         let actions = CloudTreeNodeActions.bound(
             navigationHost: AppDelegate.makeCloudTerminalNavigationHost(),
             catalog: { SurfaceCatalog.shared },
             selectedWorkspaceID: { self.tabManager.selectedTabId },
-            selectLocalWorkspace: { workspaceID in self.tabManager.selectedTabId = workspaceID },
+            selectLocalWorkspace: { workspaceID in
+                AppDelegate.shared?.selectCloudTreeLocalWorkspace(workspaceID, from: self.tabManager)
+            },
             onDidMutate: {},
             onFailure: { _ in NSSound.beep() },
             refresh: {},
@@ -7326,6 +7345,12 @@ struct ContentView: View {
                 },
                 mainAreaPanelIsTerminal: focusedPanelContext?.panel.panelType == .terminal
             )
+        )
+        // Agent turn navigation acts on the main-area terminal, so it has no
+        // target while the Dock owns keyboard focus.
+        snapshot.setBool(
+            Self.commandPaletteAgentTurnsAvailableKey,
+            focusedDock == nil && tabManager.focusedAgentTurnRailModel != nil
         )
 
         if let workspace = tabManager.selectedWorkspace {
@@ -8937,9 +8962,10 @@ struct ContentView: View {
         }
 
         registry.register(commandId: "palette.newWorkspace") {
-            AppDelegate.shared?.performNewLocalWorkspaceAction(
+            AppDelegate.shared?.performNewWorkspaceAction(
                 tabManager: tabManager,
-                debugSource: "palette.newWorkspace"
+                debugSource: "palette.newWorkspace",
+                skipConfiguredAction: true
             )
         }
         registry.register(commandId: "palette.newBrowserWorkspace") {
@@ -10292,6 +10318,9 @@ struct ContentView: View {
             return .terminal(.textBoxInput)
         case "palette.toggleTerminalCopyMode":
             // Copy mode reads keys from the terminal surface.
+            return .terminal(.surface)
+        case "palette.previousAgentTurn", "palette.nextAgentTurn":
+            // Keep the terminal focused so repeated jumps stay on the keyboard.
             return .terminal(.surface)
         default:
             return nil
@@ -15762,12 +15791,12 @@ struct SidebarFooterButtons: View {
                 .buttonStyle(SidebarFooterIconButtonStyle())
                 .frame(width: 22, height: 22, alignment: .center)
                 .safeHelp(String(localized: "sidebar.extensions.browser.title", defaultValue: "Sidebar Extensions"))
-                .accessibilityLabel(String(localized: "sidebar.extensions.browser.title", defaultValue: "Sidebar Extensions"))
+                .hintableAccessibilityLabel(String(localized: "sidebar.extensions.browser.title", defaultValue: "Sidebar Extensions"))
                 .accessibilityIdentifier("SidebarExtensionMenuButton")
                 .background(TitlebarControlAnchorView { extensionBrowserAnchorView = $0 })
             }
             if shows(.update), let updateActionsHost = AppDelegate.shared {
-                UpdatePill(model: updateViewModel, accent: cmuxAccent.color, actions: updateActionsHost)
+                UpdatePill(model: updateViewModel, accent: cmuxAccent.color, actions: updateActionsHost).windowHintTarget(updateViewModel.text)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -15859,7 +15888,7 @@ private struct SidebarHelpMenuButton: View {
         })
         .accessibilityElement(children: .ignore)
         .safeHelp(helpTitle)
-        .accessibilityLabel(helpTitle)
+        .hintableAccessibilityLabel(helpTitle)
         .accessibilityIdentifier("SidebarHelpMenuButton")
     }
 

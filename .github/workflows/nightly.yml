@@ -1571,7 +1571,8 @@ jobs:
 
       - name: Initialize cmux-next notices submodule
         if: github.ref_name == 'nightly-next'
-        run: git submodule update --init --depth 1 ghostty-next
+        shell: bash
+        run: bash scripts/ci/init-submodule.sh ghostty-next
 
       - name: Select Xcode
         run: ./scripts/select-ci-xcode.sh
@@ -1757,7 +1758,6 @@ jobs:
             "$APP/Contents/Resources/bin/cmux" \
             "$APP/Contents/Resources/bin/ghostty" \
             "$APP/Contents/Resources/bin/cmux-tui" \
-            "$APP/Contents/Resources/bin/cmux-cua" \
             "$APP/Contents/Resources/bin/cmux-diff-sidecar" \
             "$APP/Contents/Library/cmux Computer Use.app/Contents/MacOS/cmux-cua"
           do
