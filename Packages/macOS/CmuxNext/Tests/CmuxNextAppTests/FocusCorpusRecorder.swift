@@ -5,6 +5,7 @@ import Testing
 
 /// TEMPORARY, never landed: records (event -> state, effects) steps from the
 /// Swift FocusReducer for the Rust conformance corpus (cmux-focus-core).
+@MainActor
 struct FocusCorpusRecorder {
     struct Rng {
         var state: UInt64
@@ -188,7 +189,7 @@ struct FocusCorpusRecorder {
         case .revealPane(let pane): return ["revealPane": ["_0": pane]]
         case .moveResponder(let resolved): return ["moveResponder": ["_0": json(resolved)]]
         case .publishContext(let context): return ["publishContext": ["_0": json(context)]]
-        case .browserFocusMode(let tab, let active): return ["browserFocusMode": ["tab": tab, "active": active]]
+        case .browserFocusMode(let tab, let active): return ["browserFocusMode": ["tab": tab, "active": active] as [String: Any]]
         }
     }
 
@@ -210,7 +211,9 @@ struct FocusCorpusRecorder {
         return (try? JSONSerialization.data(withJSONObject: a, options: options)) == (try? JSONSerialization.data(withJSONObject: b, options: options))
     }
 
-    @Test func record() throws {
+    @Test func record() throws { try Self.recordAll() }
+
+    static func recordAll() throws {
         var sequences: [Any] = []
         let count = Int(ProcessInfo.processInfo.environment["FOCUS_CORPUS_SEQUENCES"] ?? "") ?? 120
         let length = 28
@@ -297,13 +300,13 @@ extension FocusCorpusRecorder {
                 case 0..<5:
                     let characters = rng.pick(pool)
                     queue.append(characters, surface: surface, now: instant)
-                    op = ["append": ["characters": characters, "surface": surface, "nowNs": now]]
+                    op = ["append": ["characters": characters, "surface": surface, "nowNs": now] as [String: Any]]
                 case 5..<7:
                     queue.deleteBackward(surface: surface)
                     op = ["deleteBackward": ["surface": surface]]
                 case 7:
-                    result["text"] = queue.take(surface: surface, now: instant) ?? NSNull()
-                    op = ["take": ["surface": surface, "nowNs": now]]
+                    result["text"] = queue.take(surface: surface, now: instant).map { $0 as Any } ?? NSNull()
+                    op = ["take": ["surface": surface, "nowNs": now] as [String: Any]]
                 case 8:
                     result["pending"] = queue.pending(for: surface)
                     op = ["pending": ["surface": surface]]
@@ -311,7 +314,7 @@ extension FocusCorpusRecorder {
                     queue.drop()
                     op = ["drop": [String: Any]()]
                 }
-                result["surface"] = queue.surface ?? NSNull()
+                result["surface"] = queue.surface.map { $0 as Any } ?? NSNull()
                 result["queued"] = queue.text
                 ops.append(["op": op, "result": result] as [String: Any])
             }
