@@ -1,0 +1,101 @@
+# App Attest probe (cx-ds09i slice 0). Not a release channel: it builds two
+# signed probe bundles, runs them once on this runner (a macOS VM), and uploads
+# the bundles plus the result JSON. No notarization, no publication. It runs
+# only on pushes to hq39/attest-probe; ATTEST_PROBE_PROVISIONING_PROFILE_BASE64
+# is read by this workflow only.
+name: attest-probe
+
+on:
+  push:
+    branches:
+      - hq39/attest-probe
+
+permissions:
+  contents: read
+
+concurrency:
+  group: attest-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ${{ vars.MACOS_RUNNER_26 || 'blacksmith-6vcpu-macos-26' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Import signing cert
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_CERTIFICATE_BASE64" && test -n "$APPLE_CERTIFICATE_PASSWORD"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security delete-keychain probe.keychain >/dev/null 2>&1 || true
+          security create-keychain -p "$KEYCHAIN_PASSWORD" probe.keychain
+          security set-keychain-settings -lut 3600 probe.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" probe.keychain
+          security import "$RUNNER_TEMP/cert.p12" -k probe.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$RUNNER_TEMP/cert.p12"
+          ./scripts/import-apple-developer-id-intermediates.sh probe.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" probe.keychain >/dev/null
+          security list-keychains -d user -s probe.keychain
+          security find-identity -v -p codesigning probe.keychain | sed -E 's/[0-9A-F]{40}/<sha>/'
+
+      - name: Build and sign the probe bundles
+        env:
+          ATTEST_PROBE_PROVISIONING_PROFILE_BASE64: ${{ secrets.ATTEST_PROBE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$ATTEST_PROBE_PROVISIONING_PROFILE_BASE64"
+          echo "$ATTEST_PROBE_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/probe.provisionprofile"
+          identity="$(security find-identity -v -p codesigning probe.keychain | awk -F'"' '/Developer ID Application/ {print $2; exit}')"
+          test -n "$identity"
+          ./scripts/cmux-next/attest-probe/build.sh "$RUNNER_TEMP/attest-probe" "$identity" "$RUNNER_TEMP/probe.provisionprofile"
+
+      # A data point for the abuse case "a macOS VM": only the result JSON is
+      # kept; attestation objects and DeviceCheck tokens are deleted, because
+      # artifacts of this public repository are readable by any GitHub user.
+      - name: Run the probe on this runner
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          sw_vers; sysctl -n machdep.cpu.brand_string hw.model kern.hv_vmm_present || true
+          results="$RUNNER_TEMP/attest-probe/runner-results"
+          mkdir -p "$results"
+          for v in a b; do
+            app="$RUNNER_TEMP/attest-probe/variant-$v/attestprobe.app"
+            work="$RUNNER_TEMP/probe-out-$v"
+            mkdir -p "$work/direct" "$work/open"
+            "$app/Contents/MacOS/attestprobe" attest "$work/direct" | tee "$results/variant-$v-direct.json"
+            ATTEST_PROBE_LAUNCH=open open -n -W --env ATTEST_PROBE_LAUNCH=open "$app" --args attest "$work/open" || echo "open failed: $?"
+            cp "$work/open/attest-result.json" "$results/variant-$v-open.json" 2>/dev/null || echo '{"open":"no result"}' > "$results/variant-$v-open.json"
+            cat "$results/variant-$v-open.json"; echo
+            rm -rf "$work"
+          done
+
+      # ditto keeps the exec bit and the bundle layout the signature covers.
+      - name: Zip the bundles
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/attest-probe"
+          ditto -c -k --keepParent variant-a/attestprobe.app variant-a.zip
+          ditto -c -k --keepParent variant-b/attestprobe.app variant-b.zip
+
+      - name: Upload the bundles and runner results
+        uses: actions/upload-artifact@v4
+        with:
+          name: attest-probe
+          path: |
+            ${{ runner.temp }}/attest-probe/variant-a.zip
+            ${{ runner.temp }}/attest-probe/variant-b.zip
+            ${{ runner.temp }}/attest-probe/runner-results
+          retention-days: 3
+
+      - name: Remove the keychain
+        if: always()
+        run: security delete-keychain probe.keychain >/dev/null 2>&1 || true
